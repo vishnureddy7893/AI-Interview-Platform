@@ -1,0 +1,94 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+function Projects() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] =
+    useState({
+      email: "",
+      project: "",
+    });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]:
+        e.target.value,
+    });
+  };
+
+  const saveProject = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/candidate/projects",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            formData
+          ),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (data.success) {
+        alert(
+          "Project Added Successfully"
+        );
+
+        navigate("/dashboard");
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed");
+    }
+  };
+
+  return (
+    <div
+      style={{
+        width: "500px",
+        margin: "50px auto",
+      }}
+    >
+      <h1>Add Project</h1>
+
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        onChange={handleChange}
+      />
+
+      <br />
+      <br />
+
+      <textarea
+        rows="5"
+        cols="50"
+        name="project"
+        placeholder="Describe your project"
+        onChange={handleChange}
+      />
+
+      <br />
+      <br />
+
+      <button
+        onClick={saveProject}
+      >
+        Save Project
+      </button>
+    </div>
+  );
+}
+
+export default Projects;
