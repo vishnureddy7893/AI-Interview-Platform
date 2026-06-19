@@ -4,63 +4,76 @@ import { useNavigate } from "react-router-dom";
 function CandidateSignup() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] =
+    useState({
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+    });
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.value,
     });
   };
 
-  const registerCandidate = async () => {
-    try {
-      if (
-        formData.password !==
-        formData.confirmPassword
-      ) {
-        alert("Passwords do not match");
-        return;
-      }
-
-      const response = await fetch(
-        "http://localhost:5000/candidate/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-          }),
+  const registerCandidate =
+    async () => {
+      try {
+        if (
+          formData.password !==
+          formData.confirmPassword
+        ) {
+          alert(
+            "Passwords do not match"
+          );
+          return;
         }
-      );
 
-      const data =
-        await response.json();
+        const response =
+          await fetch(
+            "http://localhost:5000/candidate/register",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                email:
+                  formData.email,
+                phone:
+                  formData.phone,
+                password:
+                  formData.password,
+              }),
+            }
+          );
 
-      if (data.success) {
+        const data =
+          await response.json();
+
+        if (data.success) {
+          alert(
+            "Account Created Successfully"
+          );
+
+          navigate(
+            "/candidate/login"
+          );
+        } else {
+          alert(data.message);
+        }
+      } catch (error) {
+        console.error(error);
         alert(
-          "Account Created Successfully"
+          "Registration Failed"
         );
-
-        navigate("/");
-      } else {
-        alert(data.message);
       }
-    } catch (error) {
-      console.error(error);
-      alert("Registration Failed");
-    }
-  };
+    };
 
   return (
     <div
@@ -68,19 +81,30 @@ function CandidateSignup() {
         width: "350px",
         margin: "80px auto",
         padding: "30px",
-        border: "1px solid #ddd",
+        border:
+          "1px solid #ddd",
         borderRadius: "10px",
         textAlign: "center",
       }}
     >
-      <h1>Create Account</h1>
+      <h1>
+        AI Interview Platform
+      </h1>
+
+      <p>
+        Candidate Registration
+      </p>
+
+      <br />
 
       <input
         type="email"
         name="email"
         placeholder="Email"
         value={formData.email}
-        onChange={handleChange}
+        onChange={
+          handleChange
+        }
         style={{
           width: "90%",
           padding: "10px",
@@ -95,7 +119,9 @@ function CandidateSignup() {
         name="phone"
         placeholder="Phone Number"
         value={formData.phone}
-        onChange={handleChange}
+        onChange={
+          handleChange
+        }
         style={{
           width: "90%",
           padding: "10px",
@@ -109,8 +135,12 @@ function CandidateSignup() {
         type="password"
         name="password"
         placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
+        value={
+          formData.password
+        }
+        onChange={
+          handleChange
+        }
         style={{
           width: "90%",
           padding: "10px",
@@ -124,8 +154,12 @@ function CandidateSignup() {
         type="password"
         name="confirmPassword"
         placeholder="Confirm Password"
-        value={formData.confirmPassword}
-        onChange={handleChange}
+        value={
+          formData.confirmPassword
+        }
+        onChange={
+          handleChange
+        }
         style={{
           width: "90%",
           padding: "10px",
@@ -136,13 +170,16 @@ function CandidateSignup() {
       <br />
 
       <button
-        onClick={registerCandidate}
+        onClick={
+          registerCandidate
+        }
         style={{
           width: "95%",
           padding: "10px",
+          cursor: "pointer",
         }}
       >
-        Create Account
+        Register
       </button>
 
       <br />
@@ -154,8 +191,13 @@ function CandidateSignup() {
 
       <button
         onClick={() =>
-          navigate("/")
+          navigate(
+            "/candidate/login"
+          )
         }
+        style={{
+          cursor: "pointer",
+        }}
       >
         Sign In
       </button>
