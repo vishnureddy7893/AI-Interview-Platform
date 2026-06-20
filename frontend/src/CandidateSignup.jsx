@@ -1,206 +1,72 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import CandidateSignupForm from "./components/candidate/CandidateSignupForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function CandidateSignup() {
-  const navigate = useNavigate();
-
-  const [formData, setFormData] =
-    useState({
-      email: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-    });
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]:
-        e.target.value,
-    });
-  };
-
-  const registerCandidate =
-    async () => {
-      try {
-        if (
-          formData.password !==
-          formData.confirmPassword
-        ) {
-          alert(
-            "Passwords do not match"
-          );
-          return;
-        }
-
-        const response =
-          await fetch(
-            "http://localhost:5000/candidate/register",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-              body: JSON.stringify({
-                email:
-                  formData.email,
-                phone:
-                  formData.phone,
-                password:
-                  formData.password,
-              }),
-            }
-          );
-
-        const data =
-          await response.json();
-
-        if (data.success) {
-          alert(
-            "Account Created Successfully"
-          );
-
-          navigate(
-            "/candidate/login"
-          );
-        } else {
-          alert(data.message);
-        }
-      } catch (error) {
-        console.error(error);
-        alert(
-          "Registration Failed"
-        );
-      }
-    };
-
   return (
-    <div
-      style={{
-        width: "350px",
-        margin: "80px auto",
-        padding: "30px",
-        border:
-          "1px solid #ddd",
-        borderRadius: "10px",
-        textAlign: "center",
-      }}
-    >
-      <h1>
-        AI Interview Platform
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center px-6">
+      <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-12 items-center">
 
-      <p>
-        Candidate Registration
-      </p>
+        {/* Left Section */}
+        <div className="hidden lg:block">
+          <h1 className="text-4xl font-extrabold text-blue-600 mb-6">
+            AI Interview Platform
+          </h1>
 
-      <br />
+          <p className="text-xl text-slate-600 mb-8">
+            Start your AI-powered interview journey today.
+          </p>
 
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={
-          handleChange
-        }
-        style={{
-          width: "90%",
-          padding: "10px",
-        }}
-      />
+          <div className="space-y-5">
 
-      <br />
-      <br />
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+              <p className="text-lg text-slate-700">
+                AI Powered Interviews
+              </p>
+            </div>
 
-      <input
-        type="text"
-        name="phone"
-        placeholder="Phone Number"
-        value={formData.phone}
-        onChange={
-          handleChange
-        }
-        style={{
-          width: "90%",
-          padding: "10px",
-        }}
-      />
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+              <p className="text-lg text-slate-700">
+                Resume Based Questions
+              </p>
+            </div>
 
-      <br />
-      <br />
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+              <p className="text-lg text-slate-700">
+                Coding & MCQ Assessments
+              </p>
+            </div>
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={
-          formData.password
-        }
-        onChange={
-          handleChange
-        }
-        style={{
-          width: "90%",
-          padding: "10px",
-        }}
-      />
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+              <p className="text-lg text-slate-700">
+                Instant AI Evaluation
+              </p>
+            </div>
 
-      <br />
-      <br />
+          </div>
+        </div>
 
-      <input
-        type="password"
-        name="confirmPassword"
-        placeholder="Confirm Password"
-        value={
-          formData.confirmPassword
-        }
-        onChange={
-          handleChange
-        }
-        style={{
-          width: "90%",
-          padding: "10px",
-        }}
-      />
+        {/* Right Section */}
+        <Card className="shadow-2xl rounded-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold">
+              Create Your Account
+            </CardTitle>
 
-      <br />
-      <br />
+            <p className="text-slate-500">
+              Join the AI Interview Platform
+            </p>
+          </CardHeader>
 
-      <button
-        onClick={
-          registerCandidate
-        }
-        style={{
-          width: "95%",
-          padding: "10px",
-          cursor: "pointer",
-        }}
-      >
-        Register
-      </button>
+          <CardContent>
+            <CandidateSignupForm />
+          </CardContent>
+        </Card>
 
-      <br />
-      <br />
-
-      <p>
-        Already have an account?
-      </p>
-
-      <button
-        onClick={() =>
-          navigate(
-            "/candidate/login"
-          )
-        }
-        style={{
-          cursor: "pointer",
-        }}
-      >
-        Sign In
-      </button>
+      </div>
     </div>
   );
 }

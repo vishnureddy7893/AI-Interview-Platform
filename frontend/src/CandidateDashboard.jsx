@@ -1,290 +1,62 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-function Dashboard() {
-  const navigate = useNavigate();
+import DashboardNavbar from "./components/layout/DashboardNavbar";
+import Sidebar from "./components/layout/Sidebar";
+import BottomNav from "./components/layout/BottomNav";
 
-  const [completion, setCompletion] =
-    useState(0);
+import Home from "./components/dashboard/Home";
+import Jobs from "./components/dashboard/Jobs";
+import Search from "./components/dashboard/Search";
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+function CandidateDashboard() {
+  const candidate = JSON.parse(localStorage.getItem("candidate"));
 
-  const fetchProfile = async () => {
-    try {
-      const email =
-        localStorage.getItem("email");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activePage, setActivePage] = useState("home");
 
-      const response = await fetch(
-        `http://localhost:5000/candidate/profile/${email}`
-      );
+  const renderPage = () => {
+    switch (activePage) {
+      case "jobs":
+        return <Jobs />;
 
-      const data =
-        await response.json();
+      case "search":
+        return <Search />;
 
-      if (data.success) {
-        const candidate =
-          data.candidate;
-
-        let percentage = 0;
-
-        // Personal Details
-        if (candidate.name)
-          percentage += 20;
-
-        // Academic Details
-        if (candidate.college)
-          percentage += 20;
-
-        // Projects
-        if (
-          candidate.projects &&
-          candidate.projects.length > 0
-        )
-          percentage += 20;
-
-        // Certifications
-        if (
-          candidate.certifications &&
-          candidate.certifications
-            .length > 0
-        )
-          percentage += 20;
-
-        // Resume
-        if (candidate.resumeUrl)
-          percentage += 20;
-
-        setCompletion(
-          percentage
-        );
-      }
-    } catch (error) {
-      console.error(error);
+      default:
+        return <Home />;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem(
-      "token"
-    );
-    localStorage.removeItem(
-      "email"
-    );
-
-    navigate("/");
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f5f7fb",
-        padding: "40px",
-        fontFamily: "Arial",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1000px",
-          margin: "auto",
-          backgroundColor: "white",
-          borderRadius: "15px",
-          padding: "30px",
-          boxShadow:
-            "0px 4px 15px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h1
-          style={{
-            textAlign: "center",
-            marginBottom: "30px",
-            color: "#1e3a8a",
-          }}
-        >
-          AI Hiring Platform
-        </h1>
+    <div className="h-screen bg-slate-100 overflow-hidden">
 
-        <h2>Candidate Dashboard</h2>
+      <DashboardNavbar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        candidate={candidate}
+      />
 
-        <br />
+      <div className="flex pt-16 pb-16 h-full">
 
-        <h3>Profile Completion</h3>
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          activePage={activePage}
+          setActivePage={setActivePage}
+        />
 
-        <div
-          style={{
-            width: "100%",
-            height: "25px",
-            backgroundColor: "#e5e7eb",
-            borderRadius: "20px",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${completion}%`,
-              height: "100%",
-              backgroundColor:
-                "#2563eb",
-            }}
-          ></div>
-        </div>
+        <main className="flex-1 overflow-y-auto p-6">
+          {renderPage()}
+        </main>
 
-        <p
-          style={{
-            fontWeight: "bold",
-            marginTop: "10px",
-          }}
-        >
-          {completion}% Completed
-        </p>
-
-        <hr />
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "1fr 1fr",
-            gap: "20px",
-          }}
-        >
-          <div
-            style={{
-              border:
-                "1px solid #ddd",
-              padding: "20px",
-              borderRadius: "10px",
-            }}
-          >
-            <h3>
-              👤 Personal Details
-            </h3>
-
-            <button
-              onClick={() =>
-                navigate(
-                  "/personal-details"
-                )
-              }
-            >
-              Edit Personal
-              Details
-            </button>
-          </div>
-
-          <div
-            style={{
-              border:
-                "1px solid #ddd",
-              padding: "20px",
-              borderRadius: "10px",
-            }}
-          >
-            <h3>
-              🎓 Academic Details
-            </h3>
-
-            <button
-              onClick={() =>
-                navigate(
-                  "/academic-details"
-                )
-              }
-            >
-              Academic Details
-            </button>
-          </div>
-
-          <div
-            style={{
-              border:
-                "1px solid #ddd",
-              padding: "20px",
-              borderRadius: "10px",
-            }}
-          >
-            <h3>💻 Projects</h3>
-
-            <button
-              onClick={() =>
-                navigate(
-                  "/projects"
-                )
-              }
-            >
-              Add Project
-            </button>
-          </div>
-
-          <div
-            style={{
-              border:
-                "1px solid #ddd",
-              padding: "20px",
-              borderRadius: "10px",
-            }}
-          >
-            <h3>
-              📜 Certifications
-            </h3>
-
-            <button
-              onClick={() =>
-                navigate(
-                  "/certifications"
-                )
-              }
-            >
-              Add Certification
-            </button>
-          </div>
-
-          <div
-            style={{
-              border:
-                "1px solid #ddd",
-              padding: "20px",
-              borderRadius: "10px",
-            }}
-          >
-            <h3>
-              📄 Resume Upload
-            </h3>
-
-            <button
-              onClick={() =>
-                navigate(
-                  "/resume-upload"
-                )
-              }
-            >
-              Upload Resume
-            </button>
-          </div>
-        </div>
-
-        <br />
-
-        <button
-          onClick={logout}
-          style={{
-            backgroundColor:
-              "red",
-            color: "white",
-            border: "none",
-            padding:
-              "10px 20px",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
       </div>
+
+      <BottomNav
+        activePage={activePage}
+        setActivePage={setActivePage}
+      />
+
     </div>
   );
 }
 
-export default Dashboard;
+export default CandidateDashboard;

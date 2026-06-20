@@ -7,7 +7,15 @@ const path = require("path");
 const askGroq = require("./groq");
 const connectDB = require("./config/db");
 const candidateRoutes = require("./routes/candidateRoutes");
-
+const recruiterRoutes = require(
+  "./routes/recruiterRoutes"
+);
+const workflowRoutes = require(
+  "./routes/workflowRoutes"
+);
+const jobRoutes = require(
+  "./routes/jobRoutes"
+);
 const app = express();
 
 // Connect MongoDB
@@ -26,6 +34,9 @@ app.use(
 
 // Candidate Routes
 app.use("/candidate", candidateRoutes);
+app.use("/recruiter", recruiterRoutes);
+app.use("/workflow", workflowRoutes);
+app.use("/job", jobRoutes);
 
 // Home Route
 app.get("/", (req, res) => {

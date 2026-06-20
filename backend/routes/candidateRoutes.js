@@ -56,6 +56,8 @@ router.post("/register", async (req, res) => {
     const existingCandidate = await Candidate.findOne({
       $or: [{ email }, { phone }],
     });
+    console.log("Incoming Data:", req.body);
+console.log("Existing Candidate:", existingCandidate);
 
     if (existingCandidate) {
       return res.status(400).json({

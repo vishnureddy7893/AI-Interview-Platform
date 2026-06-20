@@ -1,12 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+
 import { candidateLogin } from "@/services/candidateService";
+import { toast } from "sonner";
 
 const CandidateLoginForm = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -14,9 +20,7 @@ const CandidateLoginForm = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
-
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -31,19 +35,19 @@ const CandidateLoginForm = () => {
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.email.trim())
+    if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-
-    else if (
+    } else if (
       !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)
-    )
-      newErrors.email = "Invalid email";
+    ) {
+      newErrors.email = "Invalid Email";
+    }
 
-    if (!formData.password)
+    if (!formData.password) {
       newErrors.password = "Password is required";
-
-    else if (formData.password.length < 6)
+    } else if (formData.password.length < 6) {
       newErrors.password = "Minimum 6 characters";
+    }
 
     setErrors(newErrors);
 
@@ -65,14 +69,29 @@ const CandidateLoginForm = () => {
 
       console.log(response);
 
-      // toast.success("Login Successful")
+      // Store JWT Token
+      localStorage.setItem("token", response.token);
 
-      // navigate("/candidate/dashboard")
+      // Store Candidate Data
+      localStorage.setItem(
+        "candidate",
+        JSON.stringify(response.candidate)
+      );
+
+      toast.success("Login Successful!");
+
+      navigate("/candidate/dashboard");
 
     } catch (error) {
       console.error(error);
 
-      // toast.error(error.response?.data?.message)
+      if (error.response) {
+        toast.error(
+          error.response.data.message || "Login Failed"
+        );
+      } else {
+        toast.error("Server Error");
+      }
 
     } finally {
       setLoading(false);
@@ -148,18 +167,19 @@ const CandidateLoginForm = () => {
             }
           />
 
-          <Label>Remember me</Label>
+          <Label>Remember Me</Label>
         </div>
 
         <button
           type="button"
-          className="text-sm text-primary hover:underline"
+          className="text-sm text-blue-600 hover:underline"
         >
           Forgot Password?
         </button>
       </div>
 
       <Button
+        type="submit"
         className="w-full"
         disabled={loading}
       >
@@ -172,6 +192,17 @@ const CandidateLoginForm = () => {
           "Sign In"
         )}
       </Button>
+
+      <div className="text-center text-sm">
+        Don't have an account?{" "}
+        <button
+          type="button"
+          onClick={() => navigate("/candidate/signup")}
+          className="text-blue-600 hover:underline font-medium"
+        >
+          Create Account
+        </button>
+      </div>
     </form>
   );
 };
