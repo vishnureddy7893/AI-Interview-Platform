@@ -10,6 +10,7 @@ const candidateRoutes = require("./routes/candidateRoutes");
 const recruiterRoutes = require(
   "./routes/recruiterRoutes"
 );
+const dashboardRoutes = require("./routes/dashboardRoutes");
 const workflowRoutes = require(
   "./routes/workflowRoutes"
 );
@@ -37,6 +38,7 @@ app.use("/candidate", candidateRoutes);
 app.use("/recruiter", recruiterRoutes);
 app.use("/workflow", workflowRoutes);
 app.use("/job", jobRoutes);
+app.use("/dashboard", dashboardRoutes);
 
 // Home Route
 app.get("/", (req, res) => {

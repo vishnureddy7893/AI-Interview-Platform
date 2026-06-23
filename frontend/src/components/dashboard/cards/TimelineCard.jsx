@@ -1,68 +1,20 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Circle } from "lucide-react";
-
-const steps = [
-  { title: "Applied", completed: true },
-  { title: "Resume Reviewed", completed: true },
-  { title: "Assessment", completed: true },
-  { title: "Technical Interview", completed: true },
-  { title: "HR Interview", completed: false },
-  { title: "Offer", completed: false },
-];
+import { Card, CardContent } from "@/components/ui/card";
+import Timeline from "../widgets/Timeline";
 
 function TimelineCard() {
   return (
-    <Card className="rounded-3xl shadow-sm">
-      <CardHeader>
-        <CardTitle>
+    <Card className="rounded-3xl shadow-sm border">
+
+      <CardContent className="p-8">
+
+        <h2 className="text-xl font-bold">
           Application Timeline
-        </CardTitle>
-      </CardHeader>
+        </h2>
 
-      <CardContent>
-
-        <div className="space-y-5">
-
-          {steps.map((step, index) => (
-            <div
-              key={index}
-              className="flex gap-4"
-            >
-
-              <div className="flex flex-col items-center">
-
-                {step.completed ? (
-                  <CheckCircle2
-                    className="text-green-600"
-                    size={22}
-                  />
-                ) : (
-                  <Circle
-                    className="text-gray-300"
-                    size={22}
-                  />
-                )}
-
-                {index !== steps.length - 1 && (
-                  <div className="w-[2px] h-10 bg-gray-300 mt-1"></div>
-                )}
-
-              </div>
-
-              <div>
-
-                <p className="font-medium">
-                  {step.title}
-                </p>
-
-              </div>
-
-            </div>
-          ))}
-
-        </div>
+        <Timeline />
 
       </CardContent>
+
     </Card>
   );
 }

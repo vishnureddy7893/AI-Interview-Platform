@@ -5,16 +5,24 @@ const jobSchema = new mongoose.Schema(
     roleName: {
       type: String,
       required: true,
+      trim: true,
     },
 
     openings: {
       type: Number,
       required: true,
+      min: 1,
     },
 
-    minPackage: Number,
+    minPackage: {
+      type: Number,
+      default: 0,
+    },
 
-    maxPackage: Number,
+    maxPackage: {
+      type: Number,
+      default: 0,
+    },
 
     workMode: {
       type: String,
@@ -23,30 +31,76 @@ const jobSchema = new mongoose.Schema(
         "Remote",
         "Hybrid",
       ],
+      required: true,
     },
 
-    location: String,
+    location: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    minExperience: Number,
+    employmentType: {
+      type: String,
+      enum: [
+        "Full-Time",
+        "Part-Time",
+        "Internship",
+        "Contract",
+      ],
+      default: "Full-Time",
+    },
 
-    maxExperience: Number,
+    minExperience: {
+      type: Number,
+      default: 0,
+    },
 
-    requiredSkills: [String],
+    maxExperience: {
+      type: Number,
+      default: 0,
+    },
 
-    jobDescription: String,
+    requiredSkills: {
+      type: [String],
+      default: [],
+    },
 
-    applicationDeadline: Date,
+    jobDescription: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    applicationDeadline: {
+      type: Date,
+      required: true,
+    },
+
+    jobStatus: {
+      type: String,
+      enum: [
+        "Open",
+        "Closed",
+        "Draft",
+      ],
+      default: "Open",
+    },
+
+    applicationsCount: {
+      type: Number,
+      default: 0,
+    },
 
     workflowId: {
-      type:
-        mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "HiringWorkflow",
     },
 
     createdBy: {
-      type:
-        mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Recruiter",
+      required: true,
     },
   },
   {
@@ -54,7 +108,4 @@ const jobSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
-  "Job",
-  jobSchema
-);
+module.exports = mongoose.model("Job", jobSchema);

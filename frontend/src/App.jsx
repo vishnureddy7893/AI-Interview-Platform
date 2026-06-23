@@ -4,6 +4,9 @@ import Home from "./Home";
 import CandidateLogin from "./CandidateLogin";
 import CandidateSignup from "./CandidateSignup";
 import CandidateDashboard from "./CandidateDashboard";
+import RecruiterLogin from "./RecruiterLogin";
+import RecruiterSignup from "./RecruiterSignup";
+import RecruiterDashboard from "./RecruiterDashboard";
 
 function App() {
   return (
@@ -28,6 +31,20 @@ function App() {
         path="/candidate/dashboard"
         element={<CandidateDashboard />}
       />
+      <Route
+  path="/recruiter/login"
+  element={<RecruiterLogin />}
+/>
+
+<Route
+  path="/recruiter/signup"
+  element={<RecruiterSignup />}
+/>
+
+<Route
+  path="/recruiter/dashboard"
+  element={<RecruiterDashboard />}
+/>
 
     </Routes>
   );
