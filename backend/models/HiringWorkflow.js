@@ -11,6 +11,12 @@ const hiringWorkflowSchema =
   new mongoose.Schema(
     {
       companyName: String,
+
+      companyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Company",
+      },
+
       role: String,
       rounds: [roundSchema],
 

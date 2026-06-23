@@ -4,211 +4,19 @@ const jwt = require("jsonwebtoken");
 
 const Recruiter = require("../models/Recruiter");
 const Job = require("../models/Job");
-const OTP = require("../models/OTP");
-const transporter = require("../config/mail");
-const generateOTP = require("../utils/generateOTP");
 
 const router = express.Router();
-// SEND OTP
-router.post("/send-otp", async (req, res) => {
-  try {
-    const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    // Check recruiter already exists
-    const recruiter = await Recruiter.findOne({
-      email,
-    });
-
-    if (recruiter) {
-      return res.status(400).json({
-        success: false,
-        message: "Recruiter already exists",
-      });
-    }
-
-    // Delete previous OTP
-    await OTP.deleteMany({
-      email,
-    });
-
-    // Generate OTP
-    const otp = generateOTP();
-
-    // Save OTP
-    await OTP.create({
-      email,
-      otp,
-      expiresAt: new Date(
-        Date.now() + 5 * 60 * 1000
-      ),
-    });
-
-    // Send Email
-    await transporter.sendMail({
-  from: `"AI Interview Platform" <${process.env.SENDER_EMAIL}>`,
-  to: email,
-  subject: "AI Interview Platform OTP",
-
-  html: `
-    <h2>Email Verification</h2>
-
-    <p>Your OTP is:</p>
-
-    <h1>${otp}</h1>
-
-    <p>This OTP is valid for 5 minutes.</p>
-  `,
-});
-
-    res.json({
-      success: true,
-      message: "OTP sent successfully",
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-});
-router.post("/verify-otp", async (req, res) => {
-  try {
-    const {
-      companyName,
-      recruiterName,
-      designation,
-      email,
-      password,
-      otp,
-    } = req.body;
-
-    const otpData = await OTP.findOne({ email });
-
-    if (!otpData) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP not found",
-      });
-    }
-
-    if (otpData.expiresAt < new Date()) {
-      await OTP.deleteOne({ _id: otpData._id });
-
-      return res.status(400).json({
-        success: false,
-        message: "OTP Expired",
-      });
-    }
-
-    if (otpData.otp !== otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP",
-      });
-    }
-
-    const existingRecruiter = await Recruiter.findOne({
-      email,
-    });
-
-    if (existingRecruiter) {
-      return res.status(400).json({
-        success: false,
-        message: "Recruiter already exists",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const recruiter = await Recruiter.create({
-      companyName,
-      recruiterName,
-      designation,
-      email,
-      password: hashedPassword,
-    });
-
-    await OTP.deleteOne({
-      _id: otpData._id,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Recruiter Registered Successfully",
-      recruiter,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-});
-router.post("/register", async (req, res) => {
-  try {
-    const {
-      companyName,
-      recruiterName,
-      designation,
-      email,
-      password,
-    } = req.body;
-
-    const existingRecruiter =
-      await Recruiter.findOne({ email });
-
-    if (existingRecruiter) {
-      return res.status(400).json({
-        success: false,
-        message: "Recruiter already exists",
-      });
-    }
-
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
-
-    const recruiter =
-      await Recruiter.create({
-        companyName,
-        recruiterName,
-        designation,
-        email,
-        password: hashedPassword,
-      });
-
-    res.status(201).json({
-      success: true,
-      message:
-        "Recruiter registered successfully",
-      recruiter,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
 
     const recruiter = await Recruiter.findOne({
       email,
@@ -218,6 +26,32 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Recruiter not found",
+      });
+    }
+
+    if (recruiter.role !== "Recruiter") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Company admins must use company login",
+      });
+    }
+
+    if (!recruiter.invitationAccepted) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Recruiter invitation has not been accepted",
+      });
+    }
+
+    if (
+      !recruiter.isActive ||
+      recruiter.status === "inactive"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Recruiter account is inactive",
       });
     }
 
@@ -236,6 +70,8 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         id: recruiter._id,
+        role: recruiter.role,
+        companyId: recruiter.companyId,
       },
       process.env.JWT_SECRET,
       {
@@ -243,7 +79,10 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    res.json({
+    recruiter.lastLogin = new Date();
+    await recruiter.save();
+
+    res.status(200).json({
       success: true,
       token,
       recruiter,
@@ -255,12 +94,14 @@ router.post("/login", async (req, res) => {
     });
   }
 });
-// TEMPORARY DEBUG ROUTE
+
 router.get("/all", async (req, res) => {
   try {
-    const recruiters = await Recruiter.find();
+    const recruiters = await Recruiter.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
 
-    res.json({
+    res.status(200).json({
       success: true,
       count: recruiters.length,
       recruiters,
@@ -272,7 +113,7 @@ router.get("/all", async (req, res) => {
     });
   }
 });
-// CREATE JOB
+
 router.post("/jobs", async (req, res) => {
   try {
     const {
@@ -291,27 +132,37 @@ router.post("/jobs", async (req, res) => {
       recruiterId,
     } = req.body;
 
-    // Check recruiter exists
-    // Debug Logs
-console.log("Received recruiterId:", recruiterId);
+    const recruiter = await Recruiter.findOne({
+      _id: recruiterId,
+    });
 
-const recruiters = await Recruiter.find();
-console.log("Recruiters in DB:", recruiters);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter not found",
+      });
+    }
 
-console.log("Received recruiterId:", recruiterId);
+    if (!recruiter.companyId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Recruiter is not linked to a company",
+      });
+    }
 
-const recruiter = await Recruiter.findOne({
-  _id: recruiterId,
-});
+    if (
+      !recruiter.invitationAccepted ||
+      !recruiter.isActive ||
+      recruiter.status === "inactive"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Recruiter account is not active",
+      });
+    }
 
-console.log("Recruiter:", recruiter);
-
-if (!recruiter) {
-  return res.status(404).json({
-    success: false,
-    message: "Recruiter not found",
-  });
-}
     const job = await Job.create({
       roleName,
       openings,
@@ -325,6 +176,7 @@ if (!recruiter) {
       jobDescription,
       applicationDeadline,
       workflowId,
+      companyId: recruiter.companyId,
       createdBy: recruiterId,
     });
 
@@ -333,21 +185,16 @@ if (!recruiter) {
       message: "Job created successfully",
       job,
     });
-
   } catch (error) {
-    console.error(error);
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
-// GET ALL JOBS OF RECRUITER
 
 router.get("/jobs/:recruiterId", async (req, res) => {
   try {
-
     const { recruiterId } = req.params;
 
     const jobs = await Job.find({
@@ -361,16 +208,12 @@ router.get("/jobs/:recruiterId", async (req, res) => {
       totalJobs: jobs.length,
       jobs,
     });
-
   } catch (error) {
-
-    console.error(error);
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 });
+
 module.exports = router;

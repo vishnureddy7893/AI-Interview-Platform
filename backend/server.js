@@ -17,6 +17,12 @@ const workflowRoutes = require(
 const jobRoutes = require(
   "./routes/jobRoutes"
 );
+const companyRoutes = require(
+  "./routes/companyRoutes"
+);
+const teamRoutes = require(
+  "./routes/teamRoutes"
+);
 const app = express();
 
 // Connect MongoDB
@@ -38,6 +44,8 @@ app.use("/candidate", candidateRoutes);
 app.use("/recruiter", recruiterRoutes);
 app.use("/workflow", workflowRoutes);
 app.use("/job", jobRoutes);
+app.use("/company", companyRoutes);
+app.use("/team", teamRoutes);
 app.use("/dashboard", dashboardRoutes);
 
 // Home Route

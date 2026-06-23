@@ -97,6 +97,11 @@ const jobSchema = new mongoose.Schema(
       ref: "HiringWorkflow",
     },
 
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Recruiter",
