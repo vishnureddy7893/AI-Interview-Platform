@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-import { candidateLogin } from "@/services/candidateService";
+import { loginCandidate } from "@/services/candidateService";
 import { toast } from "sonner";
 
 const CandidateLoginForm = () => {
@@ -62,20 +62,19 @@ const CandidateLoginForm = () => {
     try {
       setLoading(true);
 
-      const response = await candidateLogin({
+      const response = await loginCandidate({
         email: formData.email,
         password: formData.password,
       });
 
-      console.log(response);
-
-      // Store JWT Token
-      localStorage.setItem("token", response.token);
-
-      // Store Candidate Data
+      // Unified auth object
       localStorage.setItem(
-        "candidate",
-        JSON.stringify(response.candidate)
+        "auth",
+        JSON.stringify({
+          token: response.token,
+          role: "Candidate",
+          user: response.candidate,
+        })
       );
 
       toast.success("Login Successful!");

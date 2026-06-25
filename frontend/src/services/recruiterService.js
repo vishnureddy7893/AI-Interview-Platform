@@ -1,19 +1,7 @@
 import api from "@/config/api";
 
-export const recruiterRegister = async (data) => {
-  const response = await api.post(
-    "/recruiter/register",
-    data
-  );
+export const loginRecruiter = (data) =>
+  api.post("/recruiter/login", data).then((res) => res.data);
 
-  return response.data;
-};
-
-export const recruiterLogin = async (data) => {
-  const response = await api.post(
-    "/recruiter/login",
-    data
-  );
-
-  return response.data;
-};
+// TODO: Remove alias after all frontend imports are migrated
+export const recruiterLogin = loginRecruiter;

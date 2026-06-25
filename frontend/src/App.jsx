@@ -7,6 +7,9 @@ import CandidateDashboard from "./CandidateDashboard";
 import RecruiterLogin from "./RecruiterLogin";
 import RecruiterSignup from "./RecruiterSignup";
 import RecruiterDashboard from "./RecruiterDashboard";
+import CompanyLogin from "./CompanyLogin";
+import CompanyDashboard from "./CompanyDashboard";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
   return (
@@ -17,6 +20,27 @@ function App() {
         element={<Home />}
       />
 
+      {/* Company Routes */}
+      <Route
+        path="/company/signup"
+        element={<RecruiterSignup />}
+      />
+
+      <Route
+        path="/company/login"
+        element={<CompanyLogin />}
+      />
+
+      <Route
+        path="/company/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["CompanyAdmin"]}>
+            <CompanyDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Candidate Routes */}
       <Route
         path="/candidate/login"
         element={<CandidateLogin />}
@@ -29,22 +53,32 @@ function App() {
 
       <Route
         path="/candidate/dashboard"
-        element={<CandidateDashboard />}
+        element={
+          <ProtectedRoute allowedRoles={["Candidate"]}>
+            <CandidateDashboard />
+          </ProtectedRoute>
+        }
       />
+
+      {/* Recruiter Routes */}
       <Route
-  path="/recruiter/login"
-  element={<RecruiterLogin />}
-/>
+        path="/recruiter/login"
+        element={<RecruiterLogin />}
+      />
 
-<Route
-  path="/recruiter/signup"
-  element={<RecruiterSignup />}
-/>
+      <Route
+        path="/recruiter/signup"
+        element={<RecruiterSignup />}
+      />
 
-<Route
-  path="/recruiter/dashboard"
-  element={<RecruiterDashboard />}
-/>
+      <Route
+        path="/recruiter/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["Recruiter"]}>
+            <RecruiterDashboard />
+          </ProtectedRoute>
+        }
+      />
 
     </Routes>
   );

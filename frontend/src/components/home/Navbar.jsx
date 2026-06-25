@@ -13,7 +13,7 @@ function Navbar() {
           className="text-2xl font-extrabold text-blue-600 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          AI Interview Platform
+          AI Hiring Platform
         </h1>
 
         <div className="hidden md:flex items-center gap-8">
@@ -28,6 +28,12 @@ function Navbar() {
           >
             Candidate
           </button>
+          <button
+  onClick={() => navigate("/company/login")}
+  className="text-slate-600 hover:text-blue-600"
+>
+  Company
+</button>
 
           <button
             onClick={() => navigate("/recruiter/login")}
@@ -36,9 +42,12 @@ function Navbar() {
             Recruiter
           </button>
 
-          <button className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition">
-            Get Started
-          </button>
+          <button
+  onClick={() => navigate("/candidate/login")}
+  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+>
+  Get Started
+</button>
 
         </div>
 

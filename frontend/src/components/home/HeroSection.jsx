@@ -19,7 +19,7 @@ function HeroSection() {
           transition={{ duration: 0.8 }}
           className="text-center text-6xl md:text-7xl font-extrabold text-slate-900 leading-tight"
         >
-          AI Interview Platform
+          AI Hiring Platform
         </motion.h1>
 
         <motion.p
@@ -34,27 +34,35 @@ function HeroSection() {
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="flex flex-col md:flex-row justify-center gap-6 mt-14"
-        >
-          <button
-            onClick={() => navigate("/candidate/login")}
-            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-10 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700"
-          >
-            Continue as Candidate
-            <ArrowRight size={20} />
-          </button>
+  initial={{ opacity: 0, y: 25 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.6 }}
+  className="flex flex-col md:flex-row justify-center gap-6 mt-14"
+>
+  <button
+    onClick={() => navigate("/candidate/login")}
+    className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700"
+  >
+    Candidate Login
+    <ArrowRight size={20} />
+  </button>
 
-          <button
-            onClick={() => navigate("/recruiter/login")}
-            className="flex items-center justify-center gap-2 rounded-xl border-2 border-blue-600 px-10 py-4 text-lg font-semibold text-blue-600 transition-all duration-300 hover:scale-105 hover:bg-blue-600 hover:text-white"
-          >
-            Continue as Recruiter
-            <ArrowRight size={20} />
-          </button>
-        </motion.div>
+  <button
+    onClick={() => navigate("/company/login")}
+    className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-emerald-700"
+  >
+    Company Login
+    <ArrowRight size={20} />
+  </button>
+
+  <button
+    onClick={() => navigate("/recruiter/login")}
+    className="flex items-center justify-center gap-2 rounded-xl border-2 border-purple-600 px-8 py-4 text-lg font-semibold text-purple-600 transition-all duration-300 hover:scale-105 hover:bg-purple-600 hover:text-white"
+  >
+    Recruiter Login
+    <ArrowRight size={20} />
+  </button>
+</motion.div>
 
       </div>
     </section>

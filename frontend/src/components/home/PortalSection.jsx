@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import {
   GraduationCap,
   Building2,
+  Users,
   CheckCircle2,
-  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -17,9 +17,19 @@ function PortalSection() {
         "Kick-start your career with AI-powered interview preparation and job applications.",
       icon: GraduationCap,
       color: "text-blue-600",
-      buttonColor:
-        "bg-blue-600 hover:bg-blue-700",
-      route: "/candidate/login",
+      actions: [
+  {
+    label: "Login",
+    route: "/candidate/login",
+    color: "bg-blue-600 hover:bg-blue-700 text-white",
+  },
+  {
+    label: "Register",
+    route: "/candidate/signup",
+    color:
+      "border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white",
+  },
+],
       features: [
         "Apply for Jobs",
         "AI Mock Interviews",
@@ -29,21 +39,51 @@ function PortalSection() {
     },
 
     {
-      title: "Recruiter Portal",
-      description:
-        "Hire smarter using intelligent workflows, AI interviews and candidate analytics.",
-      icon: Building2,
-      color: "text-emerald-600",
-      buttonColor:
-        "bg-emerald-600 hover:bg-emerald-700",
-      route: "/recruiter/login",
-      features: [
-        "Create Jobs",
-        "Hiring Workflow",
-        "Candidate Reports",
-        "AI Analytics",
-      ],
-    },
+  title: "Company Portal",
+  description:
+    "Register your company, manage recruiters, create jobs and hire top talent using AI.",
+  icon: Building2,
+  color: "text-emerald-600",
+  actions: [
+  {
+    label: "Login",
+    route: "/company/login",
+    color: "bg-emerald-600 hover:bg-emerald-700 text-white",
+  },
+  {
+    label: "Register",
+    route: "/company/signup",
+    color:
+      "border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white",
+  },
+],
+  features: [
+    "Company Registration",
+    "Manage Recruiters",
+    "Create Jobs",
+    "AI Hiring Dashboard",
+  ],
+},
+{
+  title: "Recruiter Portal",
+  description:
+    "Login to manage assigned jobs, evaluate candidates and track the hiring process.",
+  icon: Users,
+  color: "text-purple-600",
+  actions: [
+  {
+    label: "Login",
+    route: "/recruiter/login",
+    color: "bg-purple-600 hover:bg-purple-700 text-white",
+  },
+],
+  features: [
+    "Assigned Jobs",
+    "Candidate Shortlisting",
+    "Interview Scheduling",
+    "Hiring Pipeline",
+  ],
+},
   ];
 
   return (
@@ -82,7 +122,7 @@ function PortalSection() {
           AI Interview Platform is built for you.
         </motion.p>
 
-        <div className="grid md:grid-cols-2 gap-10 mt-16">
+        <div className="grid md:grid-cols-3 gap-10 mt-16">
 
           {portals.map((portal, index) => {
             const Icon = portal.icon;
@@ -141,16 +181,17 @@ function PortalSection() {
 
                 </div>
 
-                <button
-                  onClick={() =>
-                    navigate(portal.route)
-                  }
-                  className={`mt-10 w-full ${portal.buttonColor} text-white rounded-xl py-4 font-semibold flex justify-center items-center gap-2 transition-all duration-300 hover:scale-105`}
-                >
-                  Continue
-
-                  <ArrowRight size={20} />
-                </button>
+                <div className="mt-10 flex gap-3">
+  {portal.actions.map((action, index) => (
+    <button
+      key={index}
+      onClick={() => navigate(action.route)}
+      className={`flex-1 rounded-xl py-4 font-semibold transition-all duration-300 hover:scale-105 ${action.color}`}
+    >
+      {action.label}
+    </button>
+  ))}
+</div>
 
               </motion.div>
             );

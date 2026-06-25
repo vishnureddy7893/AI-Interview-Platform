@@ -1,58 +1,14 @@
-import {
-  House,
-  User,
-  Briefcase,
-  ClipboardList,
-  CalendarDays,
-  BarChart3,
-  Bell,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
+import navigation from "@/config/navigation";
 
-function Sidebar({ sidebarOpen, activePage, setActivePage }) {
-  const menuItems = [
-    {
-      name: "Dashboard",
-      icon: House,
-      page: "home",
-    },
-    {
-      name: "Complete Profile",
-      icon: User,
-      page: "profile",
-    },
-    {
-      name: "Applied Jobs",
-      icon: Briefcase,
-      page: "applications",
-    },
-    {
-      name: "Assessments",
-      icon: ClipboardList,
-      page: "assessments",
-    },
-    {
-      name: "Interviews",
-      icon: CalendarDays,
-      page: "interviews",
-    },
-    {
-      name: "Reports",
-      icon: BarChart3,
-      page: "reports",
-    },
-    {
-      name: "Notifications",
-      icon: Bell,
-      page: "notifications",
-    },
-    {
-      name: "Settings",
-      icon: Settings,
-      page: "settings",
-    },
-  ];
+function Sidebar({ sidebarOpen, activePage, setActivePage, role = "candidate" }) {
+  const config = navigation[role] || navigation.candidate;
+  const { logoutKey, logoutPath, items } = config;
+
+  const handleLogout = () => {
+    localStorage.removeItem(logoutKey);
+    window.location.href = logoutPath;
+  };
 
   return (
     <aside
@@ -66,7 +22,7 @@ function Sidebar({ sidebarOpen, activePage, setActivePage }) {
 
         <div className="space-y-2 px-3">
 
-          {menuItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon;
 
             return (
@@ -97,6 +53,7 @@ function Sidebar({ sidebarOpen, activePage, setActivePage }) {
         <div className="px-3">
 
           <button
+            onClick={handleLogout}
             className="flex w-full items-center gap-4 rounded-xl px-4 py-3 text-gray-600 hover:bg-gray-100 transition-all"
           >
             <LogOut size={22} />
