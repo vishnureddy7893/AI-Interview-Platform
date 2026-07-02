@@ -65,7 +65,7 @@ function RecruiterLoginForm() {
         <input
           type="email"
           name="email"
-          placeholder="hr@company.com"
+          placeholder="recruiter@company.com"
           value={loginData.email}
           onChange={handleChange}
           className="w-full rounded-xl border px-4 py-3"
@@ -111,16 +111,7 @@ function RecruiterLoginForm() {
         )}
       </button>
 
-      <p className="text-center text-sm text-gray-600">
-        Don't have an account?{" "}
-        <button
-          type="button"
-          onClick={() => navigate("/recruiter/signup")}
-          className="ml-2 font-semibold text-blue-600 hover:underline"
-        >
-          Register
-        </button>
-      </p>
+      
     </form>
   );
 }

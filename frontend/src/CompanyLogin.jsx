@@ -133,8 +133,20 @@ function CompanyLogin() {
                 )}
               </button>
             </form>
-          </CardContent>
-        </Card>
+
+<div className="mt-6 text-center text-sm text-slate-600">
+  Don't have a company account?{" "}
+  <button
+    type="button"
+    onClick={() => navigate("/company/signup")}
+    className="font-semibold text-blue-600 hover:underline"
+  >
+    Register
+  </button>
+</div>
+
+</CardContent>
+</Card>
       </div>
     </div>
   );

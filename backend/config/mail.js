@@ -13,11 +13,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-transporter.verify((error, success) => {
+transporter.verify((error) => {
   if (error) {
-    console.log("❌ Mail Error:", error);
+    console.error("❌ SMTP Connection Failed");
+    console.error(error);
   } else {
-    console.log("✅ Brevo SMTP Connected Successfully");
+    console.log("✅ Gmail SMTP Connected Successfully");
+    console.log(`📨 Sender: ${process.env.EMAIL_USER}`);
   }
 });
 

@@ -7,6 +7,9 @@ const Company = require("../models/Company");
 const Invitation = require("../models/Invitation");
 const Job = require("../models/Job");
 const Recruiter = require("../models/Recruiter");
+const {
+  sendRecruiterInvitationEmail,
+} = require("../utils/emailService");
 
 const router = express.Router();
 
@@ -26,21 +29,28 @@ const getTokenFromRequest = (req) => {
 const getCompanyAdminFromRequest = async (req) => {
   const token = getTokenFromRequest(req);
 
+  console.log("=================================");
+  console.log("TOKEN:", token);
+
   if (!token) {
+    console.log("NO TOKEN");
     return null;
   }
 
-  const decoded = jwt.verify(
-    token,
-    process.env.JWT_SECRET
-  );
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-  return Recruiter.findOne({
+  console.log("DECODED:", decoded);
+
+  const admin = await Recruiter.findOne({
     _id: decoded.id,
     role: "CompanyAdmin",
     isActive: true,
     isDeleted: { $ne: true },
   });
+
+  console.log("FOUND ADMIN:", admin);
+
+  return admin;
 };
 
 const handleRouteError = (res, error) => {
@@ -226,17 +236,30 @@ router.post("/invite", async (req, res) => {
       createdBy: admin._id,
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Invitation created successfully",
-      data: {
-        invitation,
-        invitationUrl: buildInvitationUrl(
-          req,
-          invitationToken
-        ),
-      },
-    });
+    const invitationUrl = buildInvitationUrl(
+  req,
+  invitationToken
+);
+
+// Send invitation email
+await sendRecruiterInvitationEmail({
+  recruiterName,
+  email,
+  companyName: admin.companyName,
+  designation,
+  department,
+  invitationUrl,
+});
+
+res.status(201).json({
+  success: true,
+  message: "Invitation created successfully",
+  data: {
+    invitation,
+    invitationUrl,
+  },
+});
+
   } catch (error) {
     return handleRouteError(res, error);
   }
@@ -583,5 +606,23 @@ router.delete("/:id", async (req, res) => {
     return handleRouteError(res, error);
   }
 });
+// TEMP DEBUG ROUTE (Remove after debugging)
+router.get("/debug-admin", async (req, res) => {
+  try {
+    const admins = await Recruiter.find({
+      role: "CompanyAdmin",
+    }).select("-password");
 
+    res.json({
+      success: true,
+      count: admins.length,
+      admins,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 module.exports = router;

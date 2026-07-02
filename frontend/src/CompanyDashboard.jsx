@@ -4,10 +4,13 @@ import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "./components/layout/DashboardNavbar";
 import Sidebar from "./components/layout/Sidebar";
 import BottomNav from "./components/layout/BottomNav";
+import TeamManagement from "./components/company/TeamManagement";
 
 function CompanyDashboard() {
   const navigate = useNavigate();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activePage, setActivePage] = useState("home");
 
   useEffect(() => {
     try {
@@ -39,21 +42,27 @@ function CompanyDashboard() {
       />
       <div className="flex pt-16 pb-16 h-full">
         <Sidebar
-          sidebarOpen={sidebarOpen}
-          activePage="home"
-          setActivePage={() => {}}
-          role="companyadmin"
-        />
+  sidebarOpen={sidebarOpen}
+  activePage={activePage}
+  setActivePage={setActivePage}
+  role="companyadmin"
+/>
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500 text-lg">Company Dashboard</p>
-          </div>
-        </main>
+  {activePage === "home" && (
+    <div className="flex items-center justify-center h-full">
+      <p className="text-gray-500 text-lg">
+        Company Dashboard
+      </p>
+    </div>
+  )}
+
+  {activePage === "team" && <TeamManagement />}
+</main>
       </div>
       <BottomNav
-        activePage="home"
-        setActivePage={() => {}}
-      />
+  activePage={activePage}
+  setActivePage={setActivePage}
+/>
     </div>
   );
 }

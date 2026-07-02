@@ -183,7 +183,7 @@ router.post("/login", async (req, res) => {
     const company = await Company.findById(
       admin.companyId
     );
-
+    
     const token = createCompanyToken(admin);
 
     res.status(200).json({
