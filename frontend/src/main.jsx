@@ -17,6 +17,7 @@ createRoot(document.getElementById("root")).render(
         closeButton
         duration={3000}
       />
+
     </BrowserRouter>
   </StrictMode>
 );

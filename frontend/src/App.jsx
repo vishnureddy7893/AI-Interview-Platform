@@ -10,6 +10,7 @@ import RecruiterDashboard from "./RecruiterDashboard";
 import CompanyLogin from "./CompanyLogin";
 import CompanyDashboard from "./CompanyDashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import RecruiterAcceptInvitation from "./RecruiterAcceptInvitation";
 
 function App() {
   return (
@@ -21,10 +22,7 @@ function App() {
       />
 
       {/* Company Routes */}
-      <Route
-        path="/company/signup"
-        element={<RecruiterSignup />}
-      />
+     
 
       <Route
         path="/company/login"
@@ -61,6 +59,10 @@ function App() {
       />
 
       {/* Recruiter Routes */}
+      <Route
+  path="/team/accept-invitation"
+  element={<RecruiterAcceptInvitation />}
+/>
       <Route
         path="/recruiter/login"
         element={<RecruiterLogin />}

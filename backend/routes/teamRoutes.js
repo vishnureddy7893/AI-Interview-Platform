@@ -90,7 +90,6 @@ router.get("/", async (req, res) => {
         data: {},
       });
     }
-
     const recruiters = await Recruiter.find({
       companyId: admin.companyId,
       role: "Recruiter",
@@ -287,6 +286,67 @@ router.get("/invitations", async (req, res) => {
       message: "Invitations fetched successfully",
       data: {
         invitations,
+      },
+    });
+  } catch (error) {
+    return handleRouteError(res, error);
+  }
+});
+router.get("/invitation/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    console.log("=================================");
+console.log("TOKEN FROM URL:", token);
+
+    const invitation = await Invitation.findOne({
+      invitationToken: token,
+    });
+    console.log("INVITATION FOUND:", invitation);
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: "Invitation not found",
+        data: {},
+      });
+    }
+
+    if (invitation.accepted || invitation.invitationAccepted) {
+      return res.status(400).json({
+        success: false,
+        message: "Invitation already accepted",
+        data: {},
+      });
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invitation has expired",
+        data: {},
+      });
+    }
+
+    const company = await Company.findById(
+      invitation.companyId
+    );
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found",
+        data: {},
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        recruiterName: invitation.recruiterName,
+        email: invitation.email,
+        designation: invitation.designation,
+        department: invitation.department,
+        companyName: company.companyName,
       },
     });
   } catch (error) {
@@ -617,6 +677,21 @@ router.get("/debug-admin", async (req, res) => {
       success: true,
       count: admins.length,
       admins,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+router.get("/debug-invitations", async (req, res) => {
+  try {
+    const invitations = await Invitation.find();
+
+    res.json({
+      success: true,
+      invitations,
     });
   } catch (error) {
     res.status(500).json({

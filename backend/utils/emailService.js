@@ -130,7 +130,11 @@ const sendRecruiterInvitationEmail = async ({
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  const info = await transporter.sendMail(mailOptions);
+
+console.log("========== FULL SMTP RESPONSE ==========");
+console.dir(info, { depth: null });
+console.log("========================================");
 };
 
 module.exports = {
