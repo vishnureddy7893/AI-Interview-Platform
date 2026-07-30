@@ -25,10 +25,17 @@ const teamRoutes = require(
 );
 const app = express();
 
+const PORT = Number(process.env.PORT) || 5000;
+
 // Connect MongoDB
 connectDB();
 
-app.use(cors());
+// CORS: restrict to FRONTEND_URL when set; otherwise allow all (previous default)
+const corsOptions = process.env.FRONTEND_URL
+  ? { origin: process.env.FRONTEND_URL }
+  : undefined;
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve Uploaded Files
@@ -136,8 +143,8 @@ Follow-up Question
 });
 
 // Start Server
-app.listen(5000, () => {
+app.listen(PORT, () => {
   console.log(
-    "Server running on port 5000"
+    `Server running on port ${PORT}`
   );
 });

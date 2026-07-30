@@ -1,0 +1,16 @@
+---
+description: Frontend React/Vite conventions for AI Interview Platform
+globs: frontend/**/*.{js,jsx,css}
+alwaysApply: false
+---
+
+# Frontend conventions
+
+- React function components + React Router routes in `frontend/src/App.jsx`.
+- Protect dashboards with `ProtectedRoute` and `allowedRoles`.
+- HTTP: import `api` from `config/api.js`; domain calls in `services/*.js` (candidate, company, recruiter, team).
+- UI primitives live in `components/ui/` (shadcn-style); compose feature UI under `components/{candidate,company,recruiter,dashboard,home,layout,auth}/`.
+- Role dashboards: `CandidateDashboard`, `RecruiterDashboard`, `CompanyDashboard`.
+- Styling: Tailwind + existing utility patterns (`cn` from `lib/utils.js`); reuse icons already in the project.
+- Do not invent a second Axios client or auth storage key — use `auth` in `localStorage`.
+- Keep page shells thin; put forms and widgets in `components/`.

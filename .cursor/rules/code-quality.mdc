@@ -1,0 +1,32 @@
+---
+description: Code quality standards — inspect first, reuse, consistent APIs, clean diffs, post-task checklist
+alwaysApply: true
+---
+
+# Code quality
+
+For every coding task:
+
+## Before editing
+
+- Read all related files before editing.
+- Never assume function names or APIs — verify from source.
+- Search the project before creating new functions.
+- Reuse existing services, utilities, middleware, and components whenever possible.
+
+## Implementation
+
+- Keep code modular and production-ready.
+- Avoid hardcoded values; prefer environment variables and configuration.
+- Preserve backward compatibility.
+- Add meaningful error handling.
+- Keep API responses consistent with the existing project.
+- Never leave unused imports, variables, or dead code.
+- If modifying database schemas, explain migration impact before applying changes.
+
+## After implementation
+
+1. List changed files.
+2. Explain each change.
+3. Mention any manual testing required.
+4. Mention any future improvements.

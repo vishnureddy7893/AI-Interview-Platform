@@ -12,7 +12,9 @@ async function askGroq(prompt) {
         content: prompt,
       },
     ],
-    model: "llama-3.3-70b-versatile",
+    model:
+      process.env.GROQ_MODEL ||
+      "llama-3.3-70b-versatile",
   });
 
   return completion.choices[0].message.content;

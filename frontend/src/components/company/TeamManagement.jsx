@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, UserPlus, Mail, Clock, CheckCircle, XCircle } from "lucide-react";
-import { getRecruiters, getPendingInvitations, inviteRecruiter } from "@/services/teamService";
+import {
+  getRecruiters,
+  getPendingInvitations,
+  inviteRecruiter,
+  deleteInvitation,
+} from "@/services/teamService";
 
 function TeamManagement() {
   const [recruiters, setRecruiters] = useState([]);
@@ -40,6 +45,31 @@ function TeamManagement() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const handleDeleteInvitation = async (id) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this invitation?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await deleteInvitation(id);
+
+    setFeedback({
+      type: "success",
+      message: "Invitation deleted successfully.",
+    });
+
+    fetchData();
+  } catch (error) {
+    setFeedback({
+      type: "error",
+      message:
+        error.response?.data?.message ||
+        "Failed to delete invitation.",
+    });
+  }
+};
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -264,6 +294,7 @@ function TeamManagement() {
                   <th className="px-6 py-3 font-medium">Email</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                   <th className="px-6 py-3 font-medium">Sent Date</th>
+                  <th className="px-6 py-3 font-medium text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -282,6 +313,22 @@ function TeamManagement() {
                       <td className="px-6 py-4 text-gray-600">
                         {new Date(inv.createdAt).toLocaleDateString()}
                       </td>
+                      <td className="px-6 py-4 text-center">
+  <button
+    onClick={() => handleDeleteInvitation(inv._id)}
+    className="rounded-md bg-red-50 px-3 py-1 text-sm font-medium text-red-600 hover:bg-red-100 transition"
+  >
+    Delete
+  </button>
+</td>
+                      <td className="px-6 py-4 text-center">
+  <button
+    onClick={() => handleDeleteInvitation(inv._id)}
+    className="rounded-lg bg-red-50 px-3 py-2 text-red-600 hover:bg-red-100 transition"
+  >
+    Delete
+  </button>
+</td>
                     </tr>
                   ))}
               </tbody>

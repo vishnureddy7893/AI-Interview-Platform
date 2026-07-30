@@ -1,0 +1,50 @@
+---
+description: Project architecture and change protocol — reuse layers, no duplicates, explain before edit
+alwaysApply: true
+---
+
+# Project architecture
+
+Whenever modifying this project, follow these rules.
+
+## Reuse (no duplicates)
+
+- Never create duplicate utility functions — extend or call existing helpers in `backend/utils/`, `frontend/src/lib/`, etc.
+- Never duplicate API services — add methods to existing `frontend/src/services/*` (and shared axios in `config/api.js`).
+- Always reuse existing components whenever possible (`components/ui/` and feature folders) before adding new ones.
+
+## Layering
+
+**Backend** (keep / move toward):
+
+```
+Routes → Controllers → Services → Models
+```
+
+- Routes: HTTP only (path, middleware, call controller).
+- Controllers: request/response orchestration.
+- Services: business logic (create `backend/services/` when extracting logic from fat routes).
+- Models: Mongoose schemas in `backend/models/`.
+
+**Frontend** (keep):
+
+```
+Pages → Components → Services
+```
+
+- Pages: route-level screens (`*Dashboard.jsx`, `*Login.jsx`, etc.).
+- Components: UI under `frontend/src/components/`.
+- Services: API calls under `frontend/src/services/`.
+
+## Change safety
+
+- Never introduce breaking changes (API contracts, auth roles, routes, `localStorage` `auth` shape).
+- Explain every modified file before editing (what and why).
+
+## After each task
+
+Summarize:
+
+- Files changed
+- Why they changed
+- Possible risks

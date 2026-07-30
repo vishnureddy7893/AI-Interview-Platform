@@ -292,6 +292,50 @@ router.get("/invitations", async (req, res) => {
     return handleRouteError(res, error);
   }
 });
+router.delete("/invitation/:id", async (req, res) => {
+  try {
+    const admin = await getCompanyAdminFromRequest(req);
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        message: "Company admin authorization required",
+        data: {},
+      });
+    }
+
+    const invitation = await Invitation.findOne({
+      _id: req.params.id,
+      companyId: admin.companyId,
+    });
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: "Invitation not found",
+        data: {},
+      });
+    }
+
+    if (invitation.accepted || invitation.invitationAccepted) {
+      return res.status(400).json({
+        success: false,
+        message: "Accepted invitations cannot be deleted",
+        data: {},
+      });
+    }
+
+    await Invitation.findByIdAndDelete(invitation._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Invitation deleted successfully",
+    });
+
+  } catch (error) {
+    return handleRouteError(res, error);
+  }
+});
 router.get("/invitation/:token", async (req, res) => {
   try {
     const { token } = req.params;

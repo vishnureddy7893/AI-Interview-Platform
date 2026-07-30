@@ -1,7 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+
+import api from "@/config/api";
 
 function RecruiterOtpForm({
   formData,
@@ -21,8 +22,8 @@ function RecruiterOtpForm({
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:5000/recruiter/verify-otp",
+      const res = await api.post(
+        "/recruiter/verify-otp",
         {
           companyName: formData.companyName,
           recruiterName: formData.recruiterName,

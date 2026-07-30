@@ -1,6 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import { toast } from "sonner";
+
+import api from "@/config/api";
 
 function RecruiterSignupForm({
   formData,
@@ -43,8 +44,8 @@ function RecruiterSignupForm({
     try {
       setLoading(true);
    console.log("🚀 Calling send-otp API...");
-      const res = await axios.post(
-        "http://localhost:5000/recruiter/send-otp",
+      const res = await api.post(
+        "/recruiter/send-otp",
         {
           email: formData.email,
         }

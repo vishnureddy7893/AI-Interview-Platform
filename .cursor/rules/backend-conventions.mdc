@@ -1,0 +1,17 @@
+---
+description: Backend Express/MongoDB conventions for AI Interview Platform
+globs: backend/**/*.js
+alwaysApply: false
+---
+
+# Backend conventions
+
+- CommonJS (`require` / `module.exports`); Express routers in `backend/routes/`.
+- Models in `backend/models/`; shared helpers in `backend/utils/` and `backend/config/`.
+- Mount paths in `server.js`: `/candidate`, `/recruiter`, `/company`, `/team`, `/job`, `/workflow`, `/dashboard`.
+- Interview AI endpoints live on the app root: `POST /ask`, `POST /evaluate` (use `askGroq`).
+- Auth: `bcryptjs` + `jsonwebtoken`; read Bearer tokens where helpers like `getTokenFromRequest` already exist.
+- Email: extend `backend/utils/emailService.js` / `backend/config/mail.js` — do not add a second mail stack.
+- Uploads: Multer disk storage under `backend/uploads`; PDF parsing via `pdf-parse`.
+- Prefer adding logic to existing route/controller files over new parallel modules unless the feature is clearly separate.
+- Return JSON error shapes consistent with nearby handlers (`res.status(...).json({ ... })`).

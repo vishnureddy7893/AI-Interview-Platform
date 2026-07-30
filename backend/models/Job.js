@@ -2,110 +2,187 @@ const mongoose = require("mongoose");
 
 const jobSchema = new mongoose.Schema(
   {
-    roleName: {
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
+
+    companyName: {
       type: String,
       required: true,
       trim: true,
     },
 
-    openings: {
-      type: Number,
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CompanyAdmin",
       required: true,
-      min: 1,
     },
 
-    minPackage: {
-      type: Number,
-      default: 0,
-    },
+    assignedRecruiters: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Recruiter",
+      },
+    ],
 
-    maxPackage: {
-      type: Number,
-      default: 0,
-    },
-
-    workMode: {
+    title: {
       type: String,
-      enum: [
-        "Onsite",
-        "Remote",
-        "Hybrid",
-      ],
+      required: true,
+      trim: true,
+    },
+
+    department: {
+      type: String,
       required: true,
     },
 
     location: {
       type: String,
       required: true,
-      trim: true,
+    },
+
+    workMode: {
+      type: String,
+      enum: ["Remote", "Hybrid", "Onsite"],
+      default: "Onsite",
     },
 
     employmentType: {
       type: String,
       enum: [
-        "Full-Time",
-        "Part-Time",
+        "Full Time",
+        "Part Time",
         "Internship",
         "Contract",
       ],
-      default: "Full-Time",
+      default: "Full Time",
     },
 
-    minExperience: {
-      type: Number,
-      default: 0,
-    },
-
-    maxExperience: {
-      type: Number,
-      default: 0,
-    },
-
-    requiredSkills: {
-      type: [String],
-      default: [],
-    },
-
-    jobDescription: {
+    experience: {
       type: String,
       required: true,
-      trim: true,
     },
 
-    applicationDeadline: {
-      type: Date,
-      required: true,
+    salaryMin: {
+      type: Number,
+      default: 0,
     },
 
-    jobStatus: {
+    salaryMax: {
+      type: Number,
+      default: 0,
+    },
+
+    openings: {
+      type: Number,
+      default: 1,
+    },
+
+    applicationDeadline: Date,
+    joiningDate: Date,
+
+    description: String,
+
+    responsibilities: String,
+
+    requirements: String,
+
+    benefits: String,
+
+jobType: {
+  type: String,
+  enum: [
+    "Software Development",
+    "Data Science",
+    "AI/ML",
+    "DevOps",
+    "Cloud",
+    "Cyber Security",
+    "Testing",
+    "Other",
+  ],
+  default: "Software Development",
+},
+
+education: {
+  type: String,
+  default: "Bachelor's Degree",
+},
+
+cgpa: {
+  type: Number,
+  default: 0,
+},
+
+resumeScoreCutoff: {
+  type: Number,
+  default: 0,
+},
+
+skills: [
+  {
+    type: String,
+  },
+],
+
+preferredSkills: [
+  {
+    type: String,
+  },
+],
+
+workflowId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Workflow",
+      default: null,
+    },
+
+    status: {
       type: String,
       enum: [
-        "Open",
-        "Closed",
         "Draft",
+        "Published",
+        "Paused",
+        "Closed",
       ],
-      default: "Open",
+      default: "Draft",
     },
 
-    applicationsCount: {
+    visibility: {
+      type: String,
+      enum: [
+        "Public",
+        "Private",
+        "Campus",
+      ],
+      default: "Public",
+    },
+
+    totalApplications: {
       type: Number,
       default: 0,
     },
 
-    workflowId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "HiringWorkflow",
+    totalInterviews: {
+      type: Number,
+      default: 0,
     },
 
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
+    totalSelected: {
+      type: Number,
+      default: 0,
     },
 
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Recruiter",
-      required: true,
+    totalRejected: {
+      type: Number,
+      default: 0,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {

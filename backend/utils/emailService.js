@@ -8,17 +8,28 @@ const sendRecruiterInvitationEmail = async ({
   department,
   invitationUrl,
 }) => {
-  const mailOptions = {
-    from: `"AI Interview Platform" <${process.env.SENDER_EMAIL}>`,
-    to: email,
-    subject: `You're invited to join ${companyName} on AI Interview Platform`,
-    html: `
+  try {
+    console.log("\n========================================");
+    console.log("📧 Recruiter Invitation Email");
+    console.log("========================================");
+    console.log("To:", email);
+    console.log("Company:", companyName);
+    console.log("Invitation URL:", invitationUrl);
+    console.log("========================================");
+
+    const mailOptions = {
+      from: `"AI Interview Platform" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: `You're invited to join ${companyName} on AI Interview Platform`,
+      html: `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8" />
       </head>
+
       <body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,sans-serif;">
+
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td align="center" style="padding:40px 20px;">
@@ -125,16 +136,30 @@ const sendRecruiterInvitationEmail = async ({
             </td>
           </tr>
         </table>
+
       </body>
       </html>
-    `,
-  };
+      `,
+    };
 
-  const info = await transporter.sendMail(mailOptions);
+    console.log("🚀 Calling transporter.sendMail()...");
 
-console.log("========== FULL SMTP RESPONSE ==========");
-console.dir(info, { depth: null });
-console.log("========================================");
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("\n========== EMAIL SENT ==========");
+    console.log("Accepted :", info.accepted);
+    console.log("Rejected :", info.rejected);
+    console.log("Response :", info.response);
+    console.log("MessageID:", info.messageId);
+    console.log("================================\n");
+
+    return info;
+  } catch (error) {
+    console.error("\n❌ EMAIL SENDING FAILED");
+    console.error(error);
+    console.error("================================\n");
+    throw error;
+  }
 };
 
 module.exports = {

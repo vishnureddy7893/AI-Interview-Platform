@@ -17,3 +17,5 @@ export const updateRecruiterStatus = (id, isActive) =>
 
 export const deleteRecruiter = (id) =>
   api.delete(`/team/${id}`).then((res) => res.data);
+export const deleteInvitation = (id) =>
+  api.delete(`/team/invitation/${id}`).then((res) => res.data);
