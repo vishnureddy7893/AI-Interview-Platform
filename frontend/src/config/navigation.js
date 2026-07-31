@@ -22,10 +22,9 @@ const navigation = {
     logoutPath: "/candidate/login",
     items: [
       { name: "Dashboard", icon: House, page: "home" },
-      { name: "Complete Profile", icon: User, page: "profile" },
-      { name: "Applied Jobs", icon: Briefcase, page: "applications" },
-      { name: "Assessments", icon: ClipboardList, page: "assessments" },
-      { name: "Interviews", icon: CalendarDays, page: "interviews" },
+      { name: "Jobs", icon: Briefcase, page: "jobs" },
+      { name: "Applications", icon: ClipboardList, page: "applications" },
+      { name: "Resume", icon: FileText, page: "resume" },
       { name: "Reports", icon: BarChart3, page: "reports" },
       { name: "Notifications", icon: Bell, page: "notifications" },
       { name: "Settings", icon: Settings, page: "settings" },

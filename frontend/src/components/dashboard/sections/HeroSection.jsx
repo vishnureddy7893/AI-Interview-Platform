@@ -1,5 +1,20 @@
 function HeroSection() {
-  const candidate = JSON.parse(localStorage.getItem("candidate"));
+  let candidate = null;
+
+  try {
+    const auth = JSON.parse(localStorage.getItem("auth") || "null");
+    candidate = auth?.user || null;
+  } catch {
+    // ignore
+  }
+
+  if (!candidate) {
+    try {
+      candidate = JSON.parse(localStorage.getItem("candidate") || "null");
+    } catch {
+      candidate = null;
+    }
+  }
 
   const currentHour = new Date().getHours();
 

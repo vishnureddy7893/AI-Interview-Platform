@@ -1,52 +1,52 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const pdf = require("pdf-parse");
-const askGroq = require("../groq");
 
 const Candidate = require("../models/Candidate");
+const { protectCandidate } = require("../middleware/auth");
+const { handleResumeUpload } = require("../middleware/uploadResume");
+const {
+  applyResumeToCandidate,
+  deleteResumeFile,
+  getResumeFilename,
+} = require("../utils/resumeStorage");
+const resumeController = require("../controllers/resumeController");
 
 const router = express.Router();
-// MULTER CONFIGURATION
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
 
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      Date.now() +
-        path.extname(file.originalname)
-    );
-  },
-});
-
-const upload = multer({
-  storage,
-
-  fileFilter: function (
-    req,
-    file,
-    cb
-  ) {
-    if (
-      file.mimetype ===
-      "application/pdf"
-    ) {
-      cb(null, true);
-    } else {
-      cb(
-        new Error(
-          "Only PDF files are allowed"
-        )
-      );
-    }
-  },
-});
+// Resume management (authenticated)
+router.get(
+  "/resume",
+  protectCandidate,
+  resumeController.getResume
+);
+router.get(
+  "/resume/analysis",
+  protectCandidate,
+  resumeController.getResumeAnalysis
+);
+router.post(
+  "/resume",
+  protectCandidate,
+  handleResumeUpload,
+  resumeController.uploadResume
+);
+router.post(
+  "/resume/parse",
+  protectCandidate,
+  resumeController.parseResume
+);
+router.patch(
+  "/resume",
+  protectCandidate,
+  handleResumeUpload,
+  resumeController.replaceResume
+);
+router.delete(
+  "/resume",
+  protectCandidate,
+  resumeController.deleteResume
+);
 
 // REGISTER
 router.post("/register", async (req, res) => {
@@ -319,41 +319,35 @@ router.get("/all", async (req, res) => {
     });
   }
 });
-// UPLOAD RESUME
+// Deprecated: prefer POST/PATCH /candidate/resume.
+// Kept for compatibility; requires authenticated candidate (ignores body email).
 router.post(
   "/upload-resume",
-  upload.single("resume"),
+  protectCandidate,
+  handleResumeUpload,
   async (req, res) => {
     try {
-      const { email } = req.body;
+      const candidate = req.candidate;
+      const previousFilename = getResumeFilename(candidate);
 
-      const candidate =
-        await Candidate.findOne({
-          email,
-        });
-
-      if (!candidate) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Candidate not found",
-        });
-      }
-
-      candidate.resumeUrl =
-        req.file.filename;
-
+      applyResumeToCandidate(candidate, req.file);
       await candidate.save();
+
+      if (
+        previousFilename &&
+        previousFilename !== req.file.filename
+      ) {
+        await deleteResumeFile(previousFilename);
+      }
 
       res.json({
         success: true,
-        message:
-          "Resume uploaded successfully",
-        resumeUrl:
-          req.file.filename,
+        message: "Resume uploaded successfully",
+        resumeUrl: req.file.filename,
       });
     } catch (error) {
       console.error(error);
+      await deleteResumeFile(req.file?.filename);
 
       res.status(500).json({
         success: false,
@@ -388,93 +382,5 @@ router.get("/profile/:email", async (req, res) => {
     });
   }
 });
-// AI RESUME PARSING
-router.post("/parse-resume", async (req, res) => {
-  try {
-    const { email } = req.body;
 
-    const candidate =
-      await Candidate.findOne({ email });
-
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
-    }
-
-    if (!candidate.resumeUrl) {
-      return res.status(400).json({
-        success: false,
-        message: "Resume not uploaded",
-      });
-    }
-
-    const resumePath = path.join(
-      __dirname,
-      "../uploads",
-      candidate.resumeUrl
-    );
-
-    const dataBuffer =
-      fs.readFileSync(resumePath);
-
-    const pdfData = await pdf(dataBuffer);
-
-    const resumeText =
-      pdfData.text;
-
-    const prompt = `
-You are an expert technical recruiter.
-
-Extract technical skills from this resume.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-  "programmingLanguages": [],
-  "frameworks": [],
-  "databases": [],
-  "tools": [],
-  "concepts": []
-}
-
-Do NOT return explanations.
-Do NOT return markdown.
-
-Resume:
-${resumeText}
-`;
-const skillsText =
-  await askGroq(prompt);
-    const parsedSkills =
-  JSON.parse(skillsText);
-
-const skills = [
-  ...parsedSkills.programmingLanguages,
-  ...parsedSkills.frameworks,
-  ...parsedSkills.databases,
-  ...parsedSkills.tools,
-  ...parsedSkills.concepts,
-];
-
-candidate.skills = skills;
-
-    await candidate.save();
-
-    res.json({
-      success: true,
-      skills,
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
 module.exports = router;

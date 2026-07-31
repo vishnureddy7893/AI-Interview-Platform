@@ -57,7 +57,63 @@ const candidateSchema = new mongoose.Schema(
 
     projects: [String],
 
+    // Legacy filename field — kept for backward compatibility
     resumeUrl: String,
+
+    resume: {
+      filename: String,
+      originalName: String,
+      size: Number,
+      url: String,
+      uploadedAt: Date,
+    },
+
+    parsedResume: {
+      personal: {
+        name: String,
+        email: String,
+        phone: String,
+        location: String,
+      },
+      education: [
+        {
+          degree: String,
+          university: String,
+          year: String,
+          cgpa: String,
+        },
+      ],
+      skills: {
+        programmingLanguages: [String],
+        frameworks: [String],
+        libraries: [String],
+        databases: [String],
+        cloud: [String],
+        tools: [String],
+        softSkills: [String],
+      },
+      projects: [
+        {
+          title: String,
+          description: String,
+          technologies: [String],
+        },
+      ],
+      experience: [
+        {
+          company: String,
+          role: String,
+          duration: String,
+          description: String,
+        },
+      ],
+      certifications: [String],
+      achievements: [String],
+      languages: [String],
+      parsedAt: Date,
+      aiVersion: String,
+      rawResponse: String,
+    },
   },
   {
     timestamps: true,

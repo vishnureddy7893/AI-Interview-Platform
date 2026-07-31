@@ -1,15 +1,36 @@
 const Job = require("../models/Job");
-const CompanyAdmin = require("../models/CompanyAdmin");
+const Recruiter = require("../models/Recruiter");
+const {
+  getTopicsLibrary,
+  updateJobWorkflow,
+  getJobForActor,
+  resolveActorFromRequest,
+} = require("../services/workflowService");
+const {
+  validateInterviewWorkflow,
+} = require("../utils/workflowValidation");
 
-// Create Job
+const mapError = (error) => ({
+  statusCode: error.statusCode || 500,
+  body: {
+    success: false,
+    message: error.message || "Server Error",
+    code: error.code || "SERVER_ERROR",
+  },
+});
+
+/**
+ * Legacy company-admin create (optional JWT). Kept for compatibility.
+ * Prefer POST /job/create for recruiter job creation.
+ */
 exports.createJob = async (req, res) => {
   try {
-    const admin = await CompanyAdmin.findById(req.user.id);
+    const actor = await resolveActorFromRequest(req);
 
-    if (!admin) {
-      return res.status(401).json({
+    if (actor.role !== "CompanyAdmin") {
+      return res.status(403).json({
         success: false,
-        message: "Unauthorized",
+        message: "Only company admins can use this endpoint",
       });
     }
 
@@ -30,13 +51,18 @@ exports.createJob = async (req, res) => {
       benefits,
       skills,
       visibility,
+      interviewWorkflow,
     } = req.body;
 
-    const job = await Job.create({
-      companyId: admin.companyId,
-      companyName: admin.companyName,
-      createdBy: admin._id,
+    let workflow = [];
+    if (Array.isArray(interviewWorkflow) && interviewWorkflow.length) {
+      workflow = validateInterviewWorkflow(interviewWorkflow);
+    }
 
+    const job = await Job.create({
+      companyId: actor.companyId,
+      companyName: actor.companyName,
+      createdBy: actor._id,
       title,
       department,
       location,
@@ -53,20 +79,135 @@ exports.createJob = async (req, res) => {
       benefits,
       skills,
       visibility,
+      interviewWorkflow: workflow,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Job created successfully",
       data: job,
     });
-
   } catch (err) {
     console.error(err);
+    const mapped = mapError(err);
+    return res.status(mapped.statusCode).json(mapped.body);
+  }
+};
 
-    res.status(500).json({
+exports.getTopics = async (_req, res) => {
+  try {
+    return res.json({
+      success: true,
+      ...getTopicsLibrary(),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
-};s
+};
+
+exports.updateWorkflow = async (req, res) => {
+  try {
+    const actor = await resolveActorFromRequest(req);
+    const workflow = req.body.interviewWorkflow ?? req.body.workflow;
+
+    const job = await updateJobWorkflow(req.params.id, workflow, actor);
+
+    return res.json({
+      success: true,
+      message: "Interview workflow updated successfully",
+      job,
+    });
+  } catch (error) {
+    console.error(error);
+    const mapped = mapError(error);
+    return res.status(mapped.statusCode).json(mapped.body);
+  }
+};
+
+exports.getJob = async (req, res) => {
+  try {
+    const actor = await resolveActorFromRequest(req);
+    const job = await getJobForActor(req.params.id, actor);
+
+    return res.json({
+      success: true,
+      job,
+    });
+  } catch (error) {
+    console.error(error);
+    const mapped = mapError(error);
+    return res.status(mapped.statusCode).json(mapped.body);
+  }
+};
+
+exports.listJobs = async (req, res) => {
+  try {
+    const actor = await resolveActorFromRequest(req);
+
+    const filter = {
+      companyId: actor.companyId,
+      isDeleted: { $ne: true },
+    };
+
+    if (actor.role === "Recruiter") {
+      filter.$or = [
+        { createdBy: actor._id },
+        { assignedRecruiters: actor._id },
+      ];
+    }
+
+    const jobs = await Job.find(filter).sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      jobs,
+    });
+  } catch (error) {
+    console.error(error);
+    const mapped = mapError(error);
+    return res.status(mapped.statusCode).json(mapped.body);
+  }
+};
+
+exports.listPublishedJobs = async (_req, res) => {
+  try {
+    const jobs = await Job.find({
+      isDeleted: { $ne: true },
+      status: { $in: ["Published", "Draft"] },
+      "interviewWorkflow.0": { $exists: true },
+    })
+      .select(
+        "title companyName department location experience workMode status interviewWorkflow createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return res.json({
+      success: true,
+      jobs: jobs.map((job) => ({
+        id: job._id,
+        title: job.title,
+        companyName: job.companyName,
+        department: job.department,
+        location: job.location,
+        experience: job.experience,
+        workMode: job.workMode,
+        status: job.status,
+        roundCount: (job.interviewWorkflow || []).filter(
+          (r) => r.enabled !== false
+        ).length,
+        createdAt: job.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

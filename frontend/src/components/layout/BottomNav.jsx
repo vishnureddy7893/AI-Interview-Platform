@@ -1,4 +1,4 @@
-import { House, BriefcaseBusiness, Search } from "lucide-react";
+import { House, BriefcaseBusiness, Search, ClipboardList } from "lucide-react";
 
 function BottomNav({ activePage, setActivePage }) {
   const navItems = [
@@ -11,6 +11,11 @@ function BottomNav({ activePage, setActivePage }) {
       name: "Jobs",
       icon: BriefcaseBusiness,
       page: "jobs",
+    },
+    {
+      name: "Apps",
+      icon: ClipboardList,
+      page: "applications",
     },
     {
       name: "Search",

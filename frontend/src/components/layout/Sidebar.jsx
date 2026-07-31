@@ -7,6 +7,7 @@ function Sidebar({ sidebarOpen, activePage, setActivePage, role = "candidate" })
 
   const handleLogout = () => {
     localStorage.removeItem(logoutKey);
+    localStorage.removeItem("auth");
     window.location.href = logoutPath;
   };
 

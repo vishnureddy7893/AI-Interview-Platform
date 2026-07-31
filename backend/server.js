@@ -17,6 +17,9 @@ const workflowRoutes = require(
 const jobRoutes = require(
   "./routes/jobRoutes"
 );
+const interviewRoutes = require(
+  "./routes/interviewRoutes"
+);
 const companyRoutes = require(
   "./routes/companyRoutes"
 );
@@ -51,6 +54,9 @@ app.use("/candidate", candidateRoutes);
 app.use("/recruiter", recruiterRoutes);
 app.use("/workflow", workflowRoutes);
 app.use("/job", jobRoutes);
+app.use("/interview", interviewRoutes);
+app.use("/application", require("./routes/applicationRoutes"));
+app.use("/assessment", require("./routes/assessmentRoutes"));
 app.use("/company", companyRoutes);
 app.use("/team", teamRoutes);
 app.use("/dashboard", dashboardRoutes);

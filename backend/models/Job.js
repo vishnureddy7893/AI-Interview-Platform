@@ -135,9 +135,48 @@ preferredSkills: [
 
 workflowId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Workflow",
+      ref: "HiringWorkflow",
       default: null,
     },
+
+    // Embedded per-job interview rounds (Interview Workflow Builder)
+    interviewWorkflow: [
+      {
+        id: {
+          type: String,
+          required: true,
+        },
+        type: {
+          type: String,
+          enum: [
+            "Aptitude",
+            "Technical",
+            "Coding",
+            "HR",
+            "Project Discussion",
+            "System Design",
+          ],
+          required: true,
+        },
+        title: {
+          type: String,
+          default: "",
+        },
+        order: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        enabled: {
+          type: Boolean,
+          default: true,
+        },
+        settings: {
+          type: mongoose.Schema.Types.Mixed,
+          default: {},
+        },
+      },
+    ],
 
     status: {
       type: String,

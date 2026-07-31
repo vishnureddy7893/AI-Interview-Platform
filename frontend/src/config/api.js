@@ -11,6 +11,13 @@ const api = axios.create({
 
 // Attach Authorization header from unified auth object
 api.interceptors.request.use((config) => {
+  // Let the browser set multipart boundary for FormData uploads
+  if (config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers["Content-Type"];
+    }
+  }
+
   // Never overwrite explicitly provided headers
   if (config.headers.Authorization) {
     return config;

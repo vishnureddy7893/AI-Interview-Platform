@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { RecruiterInterviewList } from "./components/recruiter/RecruiterInterviewReview";
+import { RecruiterApplicationsPanel } from "./components/recruiter/RecruiterApplications";
 
 function RecruiterDashboard() {
   const navigate = useNavigate();
@@ -22,7 +24,9 @@ function RecruiterDashboard() {
           </div>
 
           <button
+            type="button"
             className="rounded-lg bg-black px-6 py-3 text-white"
+            onClick={() => navigate("/recruiter/jobs/create")}
           >
             + Create Job
           </button>
@@ -147,6 +151,11 @@ function RecruiterDashboard() {
 
         </div>
 
+      </div>
+
+      <div className="mx-auto max-w-7xl space-y-10 px-8 pb-10">
+        <RecruiterApplicationsPanel />
+        <RecruiterInterviewList />
       </div>
 
     </div>
