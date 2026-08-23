@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:system-ca": "node --use-system-ca server.js",
+    "dev:system-ca": "node --use-system-ca --watch server.js",
+    "diagnose": "node scripts/diagnose.js",
+    "test": "node tests/resumeAnalysisQueue.test.js"
   },
   "keywords": [],
   "author": "",

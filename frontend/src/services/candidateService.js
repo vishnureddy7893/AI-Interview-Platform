@@ -6,10 +6,8 @@ export const loginCandidate = (data) =>
 export const registerCandidate = (data) =>
   api.post("/candidate/register", data).then((res) => res.data);
 
-export const getCandidateProfile = (email) =>
-  api.get(`/candidate/profile/${encodeURIComponent(email)}`).then(
-    (res) => res.data
-  );
+export const getCandidateProfile = () =>
+  api.get("/candidate/profile").then((res) => res.data);
 
 export const getResume = () =>
   api.get("/candidate/resume").then((res) => res.data);
@@ -39,11 +37,19 @@ export const replaceResume = (file, onUploadProgress) => {
 export const deleteResume = () =>
   api.delete("/candidate/resume").then((res) => res.data);
 
+/**
+ * Queues a fresh analysis and returns immediately (HTTP 202).
+ * Progress is observed through getAnalysisStatus — this never blocks the UI.
+ */
 export const parseResume = () =>
   api.post("/candidate/resume/parse").then((res) => res.data);
 
 export const getResumeAnalysis = () =>
   api.get("/candidate/resume/analysis").then((res) => res.data);
+
+/** Cheap poll of the background job state only — no parsed payload. */
+export const getAnalysisStatus = () =>
+  api.get("/candidate/resume/analysis/status").then((res) => res.data);
 
 // TODO: Remove aliases after all frontend imports are migrated
 export const candidateLogin = loginCandidate;

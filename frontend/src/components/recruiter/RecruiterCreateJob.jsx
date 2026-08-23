@@ -12,8 +12,10 @@ import InterviewWorkflowBuilder, {
   validateWorkflowClient,
 } from "@/components/recruiter/workflow/InterviewWorkflowBuilder";
 import {
+  archiveJob,
   createJob,
   getJob,
+  updateJob,
   updateJobWorkflow,
 } from "@/services/jobService";
 
@@ -51,6 +53,7 @@ function RecruiterCreateJob() {
   const [workflow, setWorkflow] = useState([]);
   const [workflowError, setWorkflowError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [loading, setLoading] = useState(isEdit);
 
   useEffect(() => {
@@ -126,14 +129,7 @@ function RecruiterCreateJob() {
     try {
       setSaving(true);
 
-      if (isEdit) {
-        await updateJobWorkflow(jobId, workflow);
-        toast.success("Interview workflow saved");
-        navigate("/recruiter/dashboard");
-        return;
-      }
-
-      const payload = {
+      const fields = {
         title: form.title.trim(),
         department: form.department.trim(),
         location: form.location.trim(),
@@ -149,6 +145,18 @@ function RecruiterCreateJob() {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
+      };
+
+      if (isEdit) {
+        await updateJob(jobId, fields);
+        await updateJobWorkflow(jobId, workflow);
+        toast.success("Job updated successfully");
+        navigate("/recruiter/dashboard");
+        return;
+      }
+
+      const payload = {
+        ...fields,
         recruiterId: user._id,
         companyName: user.companyName,
         interviewWorkflow: workflow,
@@ -163,6 +171,26 @@ function RecruiterCreateJob() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleClose = async () => {
+    const confirmClose = window.confirm(
+      "Close this job? It will stop appearing in active job listings. This does not delete the job or any existing applications."
+    );
+    if (!confirmClose) return;
+
+    try {
+      setClosing(true);
+      await archiveJob(jobId);
+      toast.success("Job closed");
+      navigate("/recruiter/dashboard");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to close job"
+      );
+    } finally {
+      setClosing(false);
     }
   };
 
@@ -200,19 +228,35 @@ function RecruiterCreateJob() {
               </p>
             </div>
           </div>
-          <Button
-            type="submit"
-            form="create-job-form"
-            disabled={saving}
-            className="rounded-xl bg-black hover:bg-neutral-800"
-          >
-            {saving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            {isEdit ? "Save Workflow" : "Create Job"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {isEdit ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={closing}
+                className="rounded-xl border-red-200 text-red-600 hover:bg-red-50"
+                onClick={handleClose}
+              >
+                {closing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Close Job
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              form="create-job-form"
+              disabled={saving}
+              className="rounded-xl bg-black hover:bg-neutral-800"
+            >
+              {saving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {isEdit ? "Save Workflow" : "Create Job"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -221,11 +265,10 @@ function RecruiterCreateJob() {
         onSubmit={handleSave}
         className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-8"
       >
-        {!isEdit ? (
-          <Card className="rounded-3xl border border-slate-200 shadow-sm">
-            <CardHeader>
-              <CardTitle>Job Details</CardTitle>
-            </CardHeader>
+        <Card className="rounded-3xl border border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle>Job Details</CardTitle>
+          </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Job Title</Label>
@@ -329,7 +372,6 @@ function RecruiterCreateJob() {
               </div>
             </CardContent>
           </Card>
-        ) : null}
 
         <InterviewWorkflowBuilder
           value={workflow}

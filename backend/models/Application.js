@@ -97,6 +97,26 @@ const applicationSchema = new mongoose.Schema(
       default: "Applied",
     },
 
+    /**
+     * Recruiter hiring decision — separate from `status`, which tracks
+     * AI/round progress and is recomputed automatically as rounds complete.
+     * Only a recruiter/company-admin action (see applicationService.updateRecruiterStatus)
+     * moves this field; round completion must never touch it.
+     */
+    recruiterStatus: {
+      type: String,
+      enum: [
+        "Applied",
+        "Under Review",
+        "Shortlisted",
+        "Interview",
+        "Selected",
+        "Hired",
+        "Rejected",
+      ],
+      default: "Applied",
+    },
+
     currentRound: {
       type: String,
       default: null,

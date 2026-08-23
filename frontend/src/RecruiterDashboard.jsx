@@ -1,9 +1,64 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
 import { RecruiterInterviewList } from "./components/recruiter/RecruiterInterviewReview";
 import { RecruiterApplicationsPanel } from "./components/recruiter/RecruiterApplications";
+import { listJobs } from "@/services/jobService";
+import { listCompanyApplications } from "@/services/applicationService";
+import { listCompanyInterviews } from "@/services/interviewService";
 
 function RecruiterDashboard() {
   const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [interviews, setInterviews] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        setLoading(true);
+        // All three endpoints are company-scoped server-side
+        // (resolveActorFromRequest), so nothing here needs a company filter.
+        const [jobData, appData, interviewData] = await Promise.all([
+          listJobs(),
+          listCompanyApplications(),
+          listCompanyInterviews(),
+        ]);
+
+        if (!mounted) return;
+        setJobs(jobData.jobs || []);
+        setApplications(appData.applications || []);
+        setInterviews(interviewData.interviews || []);
+      } catch (error) {
+        if (mounted) {
+          toast.error(
+            error.response?.data?.message || "Failed to load dashboard"
+          );
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // listJobs already excludes archived jobs (isDeleted); Closed is filtered
+  // here so a closed-but-not-archived job never counts as active.
+  const activeJobs = jobs.filter((job) => job.status !== "Closed");
+  const hiredCount = applications.filter(
+    (app) => app.recruiterStatus === "Hired"
+  ).length;
+  const recentJobs = jobs.slice(0, 5);
+
+  const showStat = (value) => (loading ? "—" : value);
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -45,7 +100,7 @@ function RecruiterDashboard() {
           </h3>
 
           <h1 className="text-4xl font-bold mt-3">
-            12
+            {showStat(activeJobs.length)}
           </h1>
         </div>
 
@@ -55,7 +110,7 @@ function RecruiterDashboard() {
           </h3>
 
           <h1 className="text-4xl font-bold mt-3">
-            148
+            {showStat(applications.length)}
           </h1>
         </div>
 
@@ -65,7 +120,7 @@ function RecruiterDashboard() {
           </h3>
 
           <h1 className="text-4xl font-bold mt-3">
-            37
+            {showStat(interviews.length)}
           </h1>
         </div>
 
@@ -75,7 +130,7 @@ function RecruiterDashboard() {
           </h3>
 
           <h1 className="text-4xl font-bold mt-3">
-            9
+            {showStat(hiredCount)}
           </h1>
         </div>
 
@@ -119,31 +174,59 @@ function RecruiterDashboard() {
 
             <tbody>
 
-              <tr className="border-b">
+              {loading ? (
+                <tr>
+                  <td className="py-4 text-gray-500" colSpan={4}>
+                    Loading jobs…
+                  </td>
+                </tr>
+              ) : recentJobs.length === 0 ? (
+                <tr>
+                  <td className="py-4 text-gray-500" colSpan={4}>
+                    No jobs posted yet.
+                  </td>
+                </tr>
+              ) : (
+                recentJobs.map((job) => (
+                  <tr
+                    key={job._id}
+                    className="border-b cursor-pointer hover:bg-slate-50"
+                    onClick={() =>
+                      navigate(`/recruiter/jobs/${job._id}/edit`)
+                    }
+                  >
 
-                <td className="py-4">
-                  Software Engineer
-                </td>
+                    <td className="py-4">
+                      {job.title}
+                    </td>
 
-                <td>
-                  Hyderabad
-                </td>
+                    <td>
+                      {job.location || "—"}
+                    </td>
 
-                <td>
-                  0-2 Years
-                </td>
+                    <td>
+                      {job.experience || "—"}
+                    </td>
 
-                <td>
+                    <td>
 
-                  <span className="rounded-full bg-green-100 px-3 py-1 text-green-700">
+                      <span
+                        className={`rounded-full px-3 py-1 ${
+                          job.status === "Closed"
+                            ? "bg-slate-100 text-slate-600"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
 
-                    Open
+                        {job.status}
 
-                  </span>
+                      </span>
 
-                </td>
+                    </td>
 
-              </tr>
+                  </tr>
+                ))
+              )}
 
             </tbody>
 

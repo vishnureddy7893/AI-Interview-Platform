@@ -16,3 +16,9 @@ export const updateJobWorkflow = (id, interviewWorkflow) =>
   api
     .patch(`/job/${id}/workflow`, { interviewWorkflow })
     .then((res) => res.data);
+
+export const updateJob = (id, data) =>
+  api.patch(`/job/${id}`, data).then((res) => res.data);
+
+export const archiveJob = (id) =>
+  api.patch(`/job/${id}/archive`).then((res) => res.data);

@@ -7,15 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getCandidateProfile } from "@/services/candidateService";
 import { getProfileCompletion } from "@/lib/profileCompletion";
 
-function getAuthUser() {
-  try {
-    const auth = JSON.parse(localStorage.getItem("auth") || "null");
-    return auth?.user || null;
-  } catch {
-    return null;
-  }
-}
-
 function NextActionCard({ onNavigate, refreshKey = 0 }) {
   const [loading, setLoading] = useState(true);
   const [percentage, setPercentage] = useState(0);
@@ -25,22 +16,9 @@ function NextActionCard({ onNavigate, refreshKey = 0 }) {
     let mounted = true;
 
     const load = async () => {
-      const user = getAuthUser();
-      if (!user?.email) {
-        if (mounted) {
-          setLoading(false);
-          setPercentage(0);
-          setNextAction({
-            label: "Complete your Personal Details",
-            page: "profile",
-          });
-        }
-        return;
-      }
-
       try {
         setLoading(true);
-        const data = await getCandidateProfile(user.email);
+        const data = await getCandidateProfile();
         if (!mounted) return;
 
         const result = getProfileCompletion(data.candidate);

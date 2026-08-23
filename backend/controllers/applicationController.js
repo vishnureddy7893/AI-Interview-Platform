@@ -9,6 +9,7 @@ const {
   listJobApplications,
   listCompanyApplications,
   getApplicationForCompany,
+  updateRecruiterStatus,
 } = require("../services/applicationService");
 const {
   resolveActorFromRequest,
@@ -29,6 +30,7 @@ const ERROR_MESSAGES = {
   ROUND_LOCKED: "This round is locked",
   ROUND_FAILED: "This round has failed",
   UNAUTHORIZED: "Unauthorized",
+  INVALID_STATUS_TRANSITION: "That status change is not allowed",
 };
 
 const mapError = (error) => {
@@ -90,6 +92,7 @@ const sanitizeApplication = (application) => {
     job,
     company,
     status: doc.status,
+    recruiterStatus: doc.recruiterStatus,
     currentRound: doc.currentRound,
     completedRounds: doc.completedRounds || [],
     lockedRounds: doc.lockedRounds || [],
@@ -280,6 +283,36 @@ exports.listForJob = async (req, res) => {
             : null;
         return payload;
       }),
+    });
+  } catch (error) {
+    const mapped = mapError(error);
+    return res.status(mapped.statusCode).json(mapped.body);
+  }
+};
+
+exports.updateStatus = async (req, res) => {
+  try {
+    const actor = await resolveActorFromRequest(req);
+    const nextStatus = req.body.recruiterStatus || req.body.status;
+
+    if (!nextStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "recruiterStatus is required",
+        code: "MISSING_STATUS",
+      });
+    }
+
+    const application = await updateRecruiterStatus(
+      req.params.id,
+      actor.companyId,
+      nextStatus
+    );
+
+    return res.json({
+      success: true,
+      message: "Application status updated",
+      application: sanitizeApplication(application),
     });
   } catch (error) {
     const mapped = mapError(error);

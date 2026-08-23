@@ -8,8 +8,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   getCompanyApplication,
   listCompanyApplications,
+  updateApplicationStatus,
 } from "@/services/applicationService";
 import { MalpracticeReportCard } from "@/components/recruiter/MalpracticeReport";
+
+// Mirrors backend RECRUITER_STATUS_TRANSITIONS (applicationService.js) — used
+// only to decide which action buttons to show; the server re-validates.
+const RECRUITER_STATUS_TRANSITIONS = {
+  Applied: ["Under Review"],
+  "Under Review": ["Shortlisted", "Rejected"],
+  Shortlisted: ["Interview"],
+  Interview: ["Selected", "Rejected"],
+  Selected: ["Hired"],
+  Hired: [],
+  Rejected: [],
+};
 
 export function RecruiterApplicationsPanel() {
   const navigate = useNavigate();
@@ -46,14 +59,16 @@ export function RecruiterApplicationsPanel() {
   }
 
   const inProgress = applications.filter(
-    (a) => !["Completed", "Rejected", "Selected", "Hired"].includes(a.status)
+    (a) => !["Hired", "Rejected"].includes(a.recruiterStatus)
   ).length;
   const completed = applications.filter((a) =>
-    ["Completed", "Selected", "Hired"].includes(a.status)
+    ["Selected", "Hired"].includes(a.recruiterStatus)
   ).length;
-  const rejected = applications.filter((a) => a.status === "Rejected").length;
+  const rejected = applications.filter(
+    (a) => a.recruiterStatus === "Rejected"
+  ).length;
   const selected = applications.filter((a) =>
-    ["Selected", "Hired", "Offer"].includes(a.status)
+    ["Selected", "Hired"].includes(a.recruiterStatus)
   ).length;
 
   return (
@@ -103,7 +118,7 @@ export function RecruiterApplicationsPanel() {
                   {app.candidate?.name || app.candidate?.email || "Candidate"}
                 </p>
                 <p className="text-sm text-slate-500">
-                  {app.job?.title || "Job"} · {app.status}
+                  {app.job?.title || "Job"} · {app.recruiterStatus}
                 </p>
               </div>
               <p className="text-sm text-slate-600">
@@ -126,6 +141,7 @@ export function RecruiterApplicationDetail() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [payload, setPayload] = useState(null);
+  const [statusSaving, setStatusSaving] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -166,6 +182,22 @@ export function RecruiterApplicationDetail() {
     application.malpracticeSummary?.assessmentId ||
     codingRound?.assessmentId ||
     null;
+  const nextStatuses = RECRUITER_STATUS_TRANSITIONS[application.recruiterStatus] || [];
+
+  const handleStatusChange = async (nextStatus) => {
+    try {
+      setStatusSaving(nextStatus);
+      const data = await updateApplicationStatus(application.id, nextStatus);
+      setPayload((prev) => ({ ...prev, application: data.application }));
+      toast.success(`Status updated to ${nextStatus}`);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to update status"
+      );
+    } finally {
+      setStatusSaving(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
@@ -176,7 +208,13 @@ export function RecruiterApplicationDetail() {
               {candidate?.name || candidate?.email}
             </h1>
             <p className="text-sm text-slate-500">
-              {application.job?.title} · {application.status}
+              {application.job?.title} ·{" "}
+              <span className="font-semibold text-slate-700">
+                {application.recruiterStatus}
+              </span>
+            </p>
+            <p className="text-xs text-slate-400">
+              Round progress: {application.status}
             </p>
           </div>
           <Button
@@ -187,6 +225,30 @@ export function RecruiterApplicationDetail() {
             Back
           </Button>
         </div>
+
+        {nextStatuses.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {nextStatuses.map((next) => (
+              <Button
+                key={next}
+                type="button"
+                variant={next === "Rejected" ? "outline" : "default"}
+                className={
+                  next === "Rejected"
+                    ? "rounded-xl"
+                    : "rounded-xl bg-black hover:bg-neutral-800"
+                }
+                disabled={statusSaving !== null}
+                onClick={() => handleStatusChange(next)}
+              >
+                {statusSaving === next ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Move to {next}
+              </Button>
+            ))}
+          </div>
+        ) : null}
 
         <Card className="rounded-3xl">
           <CardContent className="grid gap-3 py-6 sm:grid-cols-3">

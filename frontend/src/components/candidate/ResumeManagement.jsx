@@ -1,40 +1,55 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  FileText,
-  Loader2,
-  Trash2,
-  Upload,
   Download,
   Eye,
+  FileText,
+  Loader2,
   RefreshCw,
+  Trash2,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   deleteResume,
   getResume,
   replaceResume,
   uploadResume,
 } from "@/services/candidateService";
-import {
-  formatFileSize,
-  formatUploadDate,
-} from "@/lib/profileCompletion";
+import { formatFileSize, formatUploadDate } from "@/lib/profileCompletion";
 import ResumeAnalysis from "@/components/candidate/ResumeAnalysis";
+import ResumeAnalysisStatus from "@/components/candidate/ResumeAnalysisStatus";
+import useResumeAnalysis from "@/hooks/useResumeAnalysis";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
 function ResumeManagement({ onResumeChange }) {
   const inputRef = useRef(null);
   const onResumeChangeRef = useRef(onResumeChange);
+
   const [resume, setResume] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [replaceMode, setReplaceMode] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+
+  const analysisState = useResumeAnalysis(Boolean(resume));
 
   useEffect(() => {
     onResumeChangeRef.current = onResumeChange;
@@ -57,7 +72,7 @@ function ResumeManagement({ onResumeChange }) {
           onResumeChangeRef.current?.(null);
         } else {
           toast.error(
-            error.response?.data?.message || "Failed to load resume"
+            error.response?.data?.message || "Couldn't load your resume."
           );
         }
       } finally {
@@ -72,13 +87,9 @@ function ResumeManagement({ onResumeChange }) {
     };
   }, []);
 
-  const notifyResumeChange = (value) => {
-    onResumeChangeRef.current?.(value);
-  };
-
   const validateFile = (file) => {
     if (!file) {
-      toast.error("Please select a PDF file");
+      toast.error("Choose a PDF file to upload.");
       return false;
     }
 
@@ -87,12 +98,12 @@ function ResumeManagement({ onResumeChange }) {
       file.name.toLowerCase().endsWith(".pdf");
 
     if (!isPdf) {
-      toast.error("Only PDF files are allowed");
+      toast.error("Resumes must be PDF files.");
       return false;
     }
 
     if (file.size > MAX_BYTES) {
-      toast.error("File size must be 5 MB or less");
+      toast.error("That file is over 5 MB. Please upload a smaller PDF.");
       return false;
     }
 
@@ -117,19 +128,22 @@ function ResumeManagement({ onResumeChange }) {
           : await uploadResume(file, onUploadProgress);
 
       setResume(data.resume);
-      notifyResumeChange(data.resume);
+      onResumeChangeRef.current?.(data.resume);
       setReplaceMode(false);
-      toast.success(data.message || "Resume saved successfully");
+
+      // Analysis has already been queued server-side — start following it.
+      analysisState.trackFromResponse(data.analysis);
+
+      toast.success("Resume saved. We're analysing it in the background.");
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Resume upload failed"
+        error.response?.data?.message ||
+          "Upload failed. Check your connection and try again."
       );
     } finally {
       setUploading(false);
       setProgress(0);
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
+      if (inputRef.current) inputRef.current.value = "";
     }
   };
 
@@ -148,49 +162,57 @@ function ResumeManagement({ onResumeChange }) {
   const handleDelete = async () => {
     if (!resume) return;
 
-    const confirmed = window.confirm(
-      "Delete your resume? This cannot be undone."
-    );
-    if (!confirmed) return;
-
     try {
-      setUploading(true);
+      setDeleting(true);
       await deleteResume();
       setResume(null);
-      notifyResumeChange(null);
-      toast.success("Resume deleted successfully");
+      onResumeChangeRef.current?.(null);
+      setConfirmDelete(false);
+      toast.success("Resume deleted.");
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to delete resume"
+        error.response?.data?.message || "Couldn't delete your resume."
       );
     } finally {
-      setUploading(false);
+      setDeleting(false);
     }
+  };
+
+  const handleRetryAnalysis = async () => {
+    setRetrying(true);
+    const result = await analysisState.retry();
+    setRetrying(false);
+    if (!result.ok) toast.error(result.message);
   };
 
   if (loading) {
     return (
-      <Card className="rounded-3xl border border-gray-200 shadow-sm">
-        <CardContent className="flex items-center justify-center gap-3 p-16 text-slate-500">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading resume…
+      <Card>
+        <CardContent className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading your resume…
         </CardContent>
       </Card>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Resume</h1>
-        <p className="mt-2 text-slate-500">
-          Upload a PDF resume (max 5 MB). Recruiters use this for screening.
-        </p>
-      </div>
+  const showUploader = !resume || replaceMode;
 
-      {!resume || replaceMode ? (
-        <Card className="rounded-3xl border border-gray-200 shadow-sm">
-          <CardContent className="p-6 sm:p-8">
+  return (
+    <div className="mx-auto max-w-4xl space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Resume
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Upload a PDF (max 5 MB). Recruiters use this when they screen your
+          applications.
+        </p>
+      </header>
+
+      {showUploader ? (
+        <Card>
+          <CardContent className="p-6">
             <div
               onDragEnter={(e) => {
                 e.preventDefault();
@@ -205,20 +227,20 @@ function ResumeManagement({ onResumeChange }) {
                 setDragActive(false);
               }}
               onDrop={onDrop}
-              className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition ${
+              className={`flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-12 text-center transition-colors ${
                 dragActive
-                  ? "border-green-500 bg-green-50"
-                  : "border-slate-200 bg-slate-50"
+                  ? "border-primary bg-muted"
+                  : "border-border bg-muted/30"
               }`}
             >
-              <div className="mb-4 rounded-full bg-white p-4 shadow-sm">
-                <Upload className="h-8 w-8 text-green-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-slate-900">
-                {replaceMode ? "Replace your resume" : "Drag & drop your PDF"}
+              <Upload className="h-6 w-6 text-muted-foreground" />
+              <h2 className="mt-3 text-sm font-medium text-foreground">
+                {replaceMode
+                  ? "Upload a replacement PDF"
+                  : "Drag your resume here"}
               </h2>
-              <p className="mt-2 text-sm text-slate-500">
-                or browse from your device
+              <p className="mt-1 text-sm text-muted-foreground">
+                PDF only, up to 5 MB
               </p>
 
               <input
@@ -232,95 +254,89 @@ function ResumeManagement({ onResumeChange }) {
 
               <Button
                 type="button"
-                className="mt-6 rounded-xl bg-black px-6 hover:bg-neutral-800"
+                className="mt-5"
                 disabled={uploading}
                 onClick={() => inputRef.current?.click()}
               >
                 {uploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading… {progress}%
+                    Uploading {progress}%
                   </>
                 ) : (
-                  "Browse File"
+                  "Choose file"
                 )}
               </Button>
 
-              {uploading && (
-                <div className="mt-6 w-full max-w-md">
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-green-500 transition-all"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
+              {uploading ? (
+                <div className="mt-5 h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-border">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
-              )}
+              ) : null}
 
-              {replaceMode && (
+              {replaceMode ? (
                 <Button
                   type="button"
                   variant="ghost"
-                  className="mt-4"
+                  size="sm"
+                  className="mt-3"
                   disabled={uploading}
                   onClick={() => setReplaceMode(false)}
                 >
                   Cancel
                 </Button>
-              )}
+              ) : null}
             </div>
           </CardContent>
         </Card>
       ) : (
-        <Card className="rounded-3xl border border-gray-200 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-xl">
-              <FileText className="h-6 w-6 text-green-600" />
-              Resume Uploaded
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  File name
-                </p>
-                <p className="mt-2 break-all font-medium text-slate-800">
+        <Card>
+          <CardContent className="space-y-5 p-6">
+            <div className="flex items-start gap-3">
+              <div className="rounded-md border border-border bg-muted/50 p-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
                   {resume.originalName || resume.filename}
                 </p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Uploaded
-                </p>
-                <p className="mt-2 font-medium text-slate-800">
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {formatFileSize(resume.size)} · Uploaded{" "}
                   {formatUploadDate(resume.uploadedAt)}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Size
-                </p>
-                <p className="mt-2 font-medium text-slate-800">
-                  {formatFileSize(resume.size)}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <ResumeAnalysisStatus
+              status={analysisState.status}
+              message={analysisState.message}
+              canRetry={analysisState.canRetry}
+              retrying={retrying}
+              onRetry={handleRetryAnalysis}
+            />
+
+            <div className="flex flex-wrap gap-2">
               <Button
-                className="rounded-xl"
                 variant="outline"
+                size="sm"
                 onClick={() =>
-                  window.open(resume.previewUrl || resume.downloadUrl, "_blank")
+                  window.open(
+                    resume.previewUrl || resume.downloadUrl,
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
                 }
               >
                 <Eye className="mr-2 h-4 w-4" />
                 Preview
               </Button>
+
               <Button
-                className="rounded-xl"
                 variant="outline"
+                size="sm"
                 onClick={() => {
                   const link = document.createElement("a");
                   link.href = resume.downloadUrl || resume.previewUrl;
@@ -335,8 +351,10 @@ function ResumeManagement({ onResumeChange }) {
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </Button>
+
               <Button
-                className="rounded-xl bg-black hover:bg-neutral-800"
+                variant="outline"
+                size="sm"
                 disabled={uploading}
                 onClick={() => {
                   setReplaceMode(true);
@@ -346,17 +364,15 @@ function ResumeManagement({ onResumeChange }) {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Replace
               </Button>
+
               <Button
-                className="rounded-xl"
-                variant="destructive"
-                disabled={uploading}
-                onClick={handleDelete}
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={uploading || deleting}
+                onClick={() => setConfirmDelete(true)}
               >
-                {uploading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="mr-2 h-4 w-4" />
-                )}
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
             </div>
@@ -374,11 +390,39 @@ function ResumeManagement({ onResumeChange }) {
       )}
 
       {resume && !replaceMode ? (
-        <ResumeAnalysis
-          hasResume={Boolean(resume)}
-          onParsed={() => notifyResumeChange(resume)}
-        />
+        <ResumeAnalysis hasResume analysisState={analysisState} />
       ) : null}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this resume?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your resume and the details we extracted from it will be removed.
+              Applications you have already submitted are not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                handleDelete();
+              }}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete resume"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

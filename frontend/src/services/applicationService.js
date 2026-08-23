@@ -30,3 +30,8 @@ export const listJobApplications = (jobId) =>
 
 export const getCompanyApplication = (id) =>
   api.get(`/application/company/${id}`).then((res) => res.data);
+
+export const updateApplicationStatus = (id, recruiterStatus) =>
+  api
+    .patch(`/application/company/${id}/status`, { recruiterStatus })
+    .then((res) => res.data);

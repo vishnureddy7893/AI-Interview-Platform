@@ -1,39 +1,42 @@
-import { useEffect, useState } from "react";
 import {
   Award,
   Briefcase,
   Code2,
+  FolderKanban,
   GraduationCap,
   Languages,
   Loader2,
-  Sparkles,
-  User,
-  FolderKanban,
   Trophy,
+  User,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  getResumeAnalysis,
-  parseResume,
-} from "@/services/candidateService";
+import ResumeAnalysisStatus from "@/components/candidate/ResumeAnalysisStatus";
 import { formatUploadDate } from "@/lib/profileCompletion";
+
+/**
+ * Read-only view of what the AI extracted from the resume.
+ *
+ * There is no "Analyze" button in the normal flow — analysis starts on upload
+ * and runs in the background. A retry only appears when a job has actually
+ * failed, and the parsed model/provider is never surfaced to candidates.
+ */
 
 function SkillGroup({ title, items }) {
   if (!items?.length) return null;
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {title}
       </p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {items.map((skill) => (
           <span
             key={`${title}-${skill}`}
-            className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"
+            className="rounded-md border border-border bg-muted/50 px-2 py-1 text-xs text-foreground"
           >
             {skill}
           </span>
@@ -45,16 +48,18 @@ function SkillGroup({ title, items }) {
 
 function SectionCard({ icon: Icon, title, children, empty }) {
   return (
-    <Card className="rounded-3xl border border-gray-200 shadow-sm">
+    <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Icon className="h-5 w-5 text-green-600" />
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <Icon className="h-4 w-4 text-muted-foreground" />
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {empty ? (
-          <p className="text-sm text-slate-400">No data extracted</p>
+          <p className="text-sm text-muted-foreground">
+            Nothing found in your resume for this section.
+          </p>
         ) : (
           children
         )}
@@ -63,188 +68,82 @@ function SectionCard({ icon: Icon, title, children, empty }) {
   );
 }
 
-function ResumeAnalysis({ hasResume, onParsed }) {
-  const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [progressLabel, setProgressLabel] = useState("");
+function DetailRow({ label, value }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-border py-2 last:border-0">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-medium text-foreground">{value || "—"}</dd>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    let mounted = true;
+function ResumeAnalysis({ hasResume, analysisState }) {
+  const [retrying, setRetrying] = useState(false);
 
-    const load = async () => {
-      if (!hasResume) {
-        if (mounted) {
-          setAnalysis(null);
-          setLoading(false);
-        }
-        return;
-      }
+  const {
+    status,
+    analysis,
+    message,
+    canRetry,
+    loading,
+    inProgress,
+    retry,
+  } = analysisState;
 
-      try {
-        setLoading(true);
-        const data = await getResumeAnalysis();
-        if (mounted) setAnalysis(data.parsedResume || null);
-      } catch (error) {
-        if (mounted && error.response?.status !== 404) {
-          toast.error(
-            error.response?.data?.message || "Failed to load analysis"
-          );
-        }
-        if (mounted) setAnalysis(null);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
+  if (!hasResume) return null;
 
-    load();
-    return () => {
-      mounted = false;
-    };
-  }, [hasResume]);
-
-  const handleAnalyze = async () => {
-    if (!hasResume) {
-      toast.error("Upload a resume before analyzing");
-      return;
-    }
-
-    try {
-      setAnalyzing(true);
-      setProgressLabel("Reading PDF…");
-      await new Promise((r) => setTimeout(r, 300));
-      setProgressLabel("Extracting text…");
-      await new Promise((r) => setTimeout(r, 300));
-      setProgressLabel("Running AI analysis…");
-
-      const data = await parseResume();
-      setAnalysis(data.parsedResume || null);
-      onParsed?.(data.parsedResume || null);
-      toast.success(data.message || "Resume analyzed successfully");
-    } catch (error) {
-      const status = error.response?.status;
-      const data = error.response?.data;
-      const apiMessage =
-        data && typeof data === "object" ? data.message : null;
-
-      toast.error(
-        apiMessage ||
-          (status === 404
-            ? "Resume analysis endpoint not found. Restart the backend server."
-            : null) ||
-          (error.message === "Network Error"
-            ? "AI service unavailable"
-            : null) ||
-          "Resume analysis failed"
-      );
-    } finally {
-      setAnalyzing(false);
-      setProgressLabel("");
-    }
+  const handleRetry = async () => {
+    setRetrying(true);
+    const result = await retry();
+    setRetrying(false);
+    if (!result.ok) toast.error(result.message);
   };
-
-  if (!hasResume) {
-    return null;
-  }
 
   const personal = analysis?.personal || {};
   const skills = analysis?.skills || {};
+  const hasSkills = Object.values(skills).some((list) => list?.length);
 
   return (
-    <div className="space-y-6">
-      <Card className="rounded-3xl border border-gray-200 shadow-sm">
-        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              AI Resume Analysis
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {analysis?.parsedAt
-                ? `Last analyzed ${formatUploadDate(analysis.parsedAt)}${
-                    analysis.aiVersion ? ` · ${analysis.aiVersion}` : ""
-                  }`
-                : "Extract skills, education, projects, and experience with AI."}
-            </p>
-          </div>
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-lg font-semibold text-foreground">
+          What we found in your resume
+        </h2>
+        {analysis?.parsedAt ? (
+          <p className="text-xs text-muted-foreground">
+            Updated {formatUploadDate(analysis.parsedAt)}
+          </p>
+        ) : null}
+      </div>
 
-          <Button
-            className="rounded-xl bg-black hover:bg-neutral-800"
-            disabled={analyzing || loading}
-            onClick={handleAnalyze}
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing…
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                {analysis ? "Re-analyze Resume" : "Analyze Resume"}
-              </>
-            )}
-          </Button>
-        </CardContent>
+      <ResumeAnalysisStatus
+        status={status}
+        message={message}
+        canRetry={canRetry}
+        retrying={retrying}
+        onRetry={handleRetry}
+      />
 
-        {analyzing && (
-          <div className="border-t border-slate-100 px-6 py-4">
-            <div className="mb-2 flex items-center justify-between text-sm text-slate-600">
-              <span>{progressLabel || "Working…"}</span>
-              <Loader2 className="h-4 w-4 animate-spin text-green-600" />
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full w-2/3 animate-pulse rounded-full bg-green-500" />
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center gap-2 py-10 text-slate-500">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading analysis…
+      {loading && !analysis ? (
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-border py-12 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading your details…
         </div>
       ) : analysis ? (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <SectionCard icon={User} title="Profile Summary">
-            <dl className="space-y-3 text-sm">
-              <div>
-                <dt className="text-slate-400">Name</dt>
-                <dd className="font-medium text-slate-800">
-                  {personal.name || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-400">Email</dt>
-                <dd className="font-medium text-slate-800">
-                  {personal.email || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-400">Phone</dt>
-                <dd className="font-medium text-slate-800">
-                  {personal.phone || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-400">Location</dt>
-                <dd className="font-medium text-slate-800">
-                  {personal.location || "—"}
-                </dd>
-              </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SectionCard icon={User} title="Contact details">
+            <dl>
+              <DetailRow label="Name" value={personal.name} />
+              <DetailRow label="Email" value={personal.email} />
+              <DetailRow label="Phone" value={personal.phone} />
+              <DetailRow label="Location" value={personal.location} />
             </dl>
           </SectionCard>
 
-          <SectionCard
-            icon={Code2}
-            title="Skills"
-            empty={
-              !Object.values(skills).some((list) => list?.length)
-            }
-          >
+          <SectionCard icon={Code2} title="Skills" empty={!hasSkills}>
             <div className="space-y-4">
               <SkillGroup
-                title="Programming Languages"
+                title="Programming languages"
                 items={skills.programmingLanguages}
               />
               <SkillGroup title="Frameworks" items={skills.frameworks} />
@@ -252,7 +151,7 @@ function ResumeAnalysis({ hasResume, onParsed }) {
               <SkillGroup title="Databases" items={skills.databases} />
               <SkillGroup title="Cloud" items={skills.cloud} />
               <SkillGroup title="Tools" items={skills.tools} />
-              <SkillGroup title="Soft Skills" items={skills.softSkills} />
+              <SkillGroup title="Soft skills" items={skills.softSkills} />
             </div>
           </SectionCard>
 
@@ -261,26 +160,23 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             title="Education"
             empty={!analysis.education?.length}
           >
-            <div className="space-y-4">
+            <ul className="space-y-3">
               {analysis.education?.map((edu, index) => (
-                <div
-                  key={`edu-${index}`}
-                  className="rounded-2xl bg-slate-50 p-4"
-                >
-                  <p className="font-semibold text-slate-900">
+                <li key={`edu-${index}`} className="rounded-md border border-border p-3">
+                  <p className="text-sm font-medium text-foreground">
                     {edu.degree || "Degree"}
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted-foreground">
                     {edu.university || "—"}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {[edu.year, edu.cgpa ? `CGPA ${edu.cgpa}` : null]
                       .filter(Boolean)
                       .join(" · ") || "—"}
                   </p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </SectionCard>
 
           <SectionCard
@@ -288,27 +184,23 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             title="Experience"
             empty={!analysis.experience?.length}
           >
-            <div className="space-y-4">
+            <ul className="space-y-3">
               {analysis.experience?.map((exp, index) => (
-                <div
-                  key={`exp-${index}`}
-                  className="rounded-2xl bg-slate-50 p-4"
-                >
-                  <p className="font-semibold text-slate-900">
+                <li key={`exp-${index}`} className="rounded-md border border-border p-3">
+                  <p className="text-sm font-medium text-foreground">
                     {exp.role || "Role"}
                   </p>
-                  <p className="text-sm text-slate-600">
-                    {exp.company || "—"}
-                    {exp.duration ? ` · ${exp.duration}` : ""}
+                  <p className="text-sm text-muted-foreground">
+                    {[exp.company, exp.duration].filter(Boolean).join(" · ") || "—"}
                   </p>
                   {exp.description ? (
-                    <p className="mt-2 text-sm text-slate-500">
+                    <p className="mt-2 text-sm text-muted-foreground">
                       {exp.description}
                     </p>
                   ) : null}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </SectionCard>
 
           <SectionCard
@@ -316,35 +208,32 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             title="Projects"
             empty={!analysis.projects?.length}
           >
-            <div className="space-y-4">
+            <ul className="space-y-3">
               {analysis.projects?.map((project, index) => (
-                <div
-                  key={`proj-${index}`}
-                  className="rounded-2xl bg-slate-50 p-4"
-                >
-                  <p className="font-semibold text-slate-900">
+                <li key={`proj-${index}`} className="rounded-md border border-border p-3">
+                  <p className="text-sm font-medium text-foreground">
                     {project.title || "Project"}
                   </p>
                   {project.description ? (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {project.description}
                     </p>
                   ) : null}
                   {project.technologies?.length ? (
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {project.technologies.map((tech) => (
                         <span
                           key={`${index}-${tech}`}
-                          className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-600"
+                          className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
                         >
                           {tech}
                         </span>
                       ))}
                     </div>
                   ) : null}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </SectionCard>
 
           <SectionCard
@@ -352,9 +241,10 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             title="Certifications"
             empty={!analysis.certifications?.length}
           >
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <ul className="space-y-1.5 text-sm text-foreground">
               {analysis.certifications?.map((item, index) => (
-                <li key={`cert-${index}`}>
+                <li key={`cert-${index}`} className="flex gap-2">
+                  <span className="text-muted-foreground">•</span>
                   {typeof item === "string" ? item : item?.name || "—"}
                 </li>
               ))}
@@ -366,9 +256,12 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             title="Achievements"
             empty={!analysis.achievements?.length}
           >
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <ul className="space-y-1.5 text-sm text-foreground">
               {analysis.achievements?.map((item, index) => (
-                <li key={`ach-${index}`}>{item}</li>
+                <li key={`ach-${index}`} className="flex gap-2">
+                  <span className="text-muted-foreground">•</span>
+                  {item}
+                </li>
               ))}
             </ul>
           </SectionCard>
@@ -378,11 +271,11 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             title="Languages"
             empty={!analysis.languages?.length}
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {analysis.languages?.map((lang) => (
                 <span
                   key={lang}
-                  className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"
+                  className="rounded-md border border-border bg-muted/50 px-2 py-1 text-xs"
                 >
                   {lang}
                 </span>
@@ -390,12 +283,12 @@ function ResumeAnalysis({ hasResume, onParsed }) {
             </div>
           </SectionCard>
         </div>
-      ) : (
-        <p className="text-center text-sm text-slate-400">
-          No analysis yet. Click Analyze Resume to extract profile data.
-        </p>
+      ) : inProgress ? null : (
+        <div className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+          No details extracted yet.
+        </div>
       )}
-    </div>
+    </section>
   );
 }
 

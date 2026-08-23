@@ -106,6 +106,8 @@ router.get("/all/:recruiterId", async (req, res) => {
 });
 
 router.patch("/:id/workflow", jobController.updateWorkflow);
+router.patch("/:id/archive", jobController.archiveJob);
+router.patch("/:id", jobController.updateJob);
 router.get("/:id", jobController.getJob);
 
 module.exports = router;

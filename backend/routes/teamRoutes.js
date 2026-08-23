@@ -710,38 +710,4 @@ router.delete("/:id", async (req, res) => {
     return handleRouteError(res, error);
   }
 });
-// TEMP DEBUG ROUTE (Remove after debugging)
-router.get("/debug-admin", async (req, res) => {
-  try {
-    const admins = await Recruiter.find({
-      role: "CompanyAdmin",
-    }).select("-password");
-
-    res.json({
-      success: true,
-      count: admins.length,
-      admins,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-router.get("/debug-invitations", async (req, res) => {
-  try {
-    const invitations = await Invitation.find();
-
-    res.json({
-      success: true,
-      invitations,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
 module.exports = router;

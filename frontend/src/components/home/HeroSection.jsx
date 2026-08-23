@@ -1,69 +1,105 @@
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
+
+/**
+ * Hero.
+ *
+ * Says what the product does in one sentence a recruiter would recognise, then
+ * offers one primary path (candidates, the larger audience) and one secondary
+ * path (employers). No gradient wash, no floating blur, no scale-on-hover —
+ * the visual weight sits in the type hierarchy.
+ *
+ * The panel on the right is the real pipeline the platform runs, not a mock
+ * screenshot of features that do not exist.
+ */
+
+const PIPELINE = [
+  { step: "Apply", detail: "Resume parsed and matched to the role" },
+  { step: "Screen", detail: "AI shortlists against the job requirements" },
+  { step: "Assess", detail: "Coding round with automated evaluation" },
+  { step: "Interview", detail: "Adaptive technical and behavioural rounds" },
+  { step: "Decide", detail: "Structured report with scores and evidence" },
+];
 
 function HeroSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-blue-50 to-white">
+    <section className="border-b border-border bg-background">
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">
+            AI-powered recruitment
+          </p>
 
-      {/* Background Blur */}
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-blue-300/20 blur-3xl"></div>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            Screen, assess and interview candidates in one place
+          </h1>
 
-      <div className="relative max-w-7xl mx-auto px-6 py-28">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">
+            Resumes are parsed and matched to your roles automatically. Coding
+            rounds and technical interviews run themselves, and every candidate
+            arrives at your shortlist with a structured, evidence-backed report.
+          </p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center text-6xl md:text-7xl font-extrabold text-slate-900 leading-tight"
-        >
-          AI Hiring Platform
-        </motion.h1>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" onClick={() => navigate("/candidate/signup")}>
+              Create a candidate account
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8 max-w-4xl mx-auto text-center text-xl text-slate-600 leading-9"
-        >
-          One intelligent platform for AI-powered recruitment,
-          resume screening, coding assessments, technical interviews
-          and hiring workflows.
-        </motion.p>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/company/login")}
+            >
+              I'm hiring
+            </Button>
+          </div>
 
-        <motion.div
-  initial={{ opacity: 0, y: 25 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.6 }}
-  className="flex flex-col md:flex-row justify-center gap-6 mt-14"
->
-  <button
-    onClick={() => navigate("/candidate/login")}
-    className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-blue-700"
-  >
-    Candidate Login
-    <ArrowRight size={20} />
-  </button>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/candidate/login")}
+              className="font-medium text-foreground underline underline-offset-4"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
 
-  <button
-    onClick={() => navigate("/company/login")}
-    className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-emerald-700"
-  >
-    Company Login
-    <ArrowRight size={20} />
-  </button>
+        <div className="rounded-lg border border-border bg-muted/30 p-6 sm:p-8">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            The hiring pipeline
+          </p>
 
-  <button
-    onClick={() => navigate("/recruiter/login")}
-    className="flex items-center justify-center gap-2 rounded-xl border-2 border-purple-600 px-8 py-4 text-lg font-semibold text-purple-600 transition-all duration-300 hover:scale-105 hover:bg-purple-600 hover:text-white"
-  >
-    Recruiter Login
-    <ArrowRight size={20} />
-  </button>
-</motion.div>
+          <ol className="mt-5 space-y-0">
+            {PIPELINE.map((item, index) => (
+              <li key={item.step} className="flex gap-4">
+                <div className="flex flex-col items-center">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-border bg-background text-xs font-semibold text-foreground">
+                    {index + 1}
+                  </span>
+                  {index < PIPELINE.length - 1 ? (
+                    <span aria-hidden className="w-px flex-1 bg-border" />
+                  ) : null}
+                </div>
 
+                <div className={index < PIPELINE.length - 1 ? "pb-6" : ""}>
+                  <p className="text-sm font-medium text-foreground">
+                    {item.step}
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {item.detail}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </section>
   );

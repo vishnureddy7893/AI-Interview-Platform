@@ -114,6 +114,41 @@ const candidateSchema = new mongoose.Schema(
       aiVersion: String,
       rawResponse: String,
     },
+
+    /**
+     * Lifecycle of the background resume analysis job.
+     *
+     * idle       — no resume uploaded yet
+     * uploaded   — resume stored, analysis queued but not started
+     * processing — a worker has claimed this job (claim is atomic; see
+     *              services/resumeAnalysisQueue.js) so it can never run twice
+     * completed  — parsedResume is populated and current
+     * failed     — every attempt was exhausted; lastError explains why
+     */
+    resumeAnalysis: {
+      status: {
+        type: String,
+        enum: ["idle", "uploaded", "processing", "completed", "failed"],
+        default: "idle",
+      },
+      attempts: {
+        type: Number,
+        default: 0,
+      },
+      queuedAt: Date,
+      startedAt: Date,
+      completedAt: Date,
+      nextRetryAt: Date,
+      // Which uploaded file this status refers to — guards against a stale
+      // result being shown after the candidate replaces their resume.
+      resumeFilename: String,
+      lastError: {
+        code: String,
+        message: String,
+        at: Date,
+        retryable: Boolean,
+      },
+    },
   },
   {
     timestamps: true,

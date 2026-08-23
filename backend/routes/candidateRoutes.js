@@ -25,6 +25,12 @@ router.get(
   protectCandidate,
   resumeController.getResumeAnalysis
 );
+// Cheap polling endpoint for the background analysis job.
+router.get(
+  "/resume/analysis/status",
+  protectCandidate,
+  resumeController.getAnalysisStatus
+);
 router.post(
   "/resume",
   protectCandidate,
@@ -56,8 +62,6 @@ router.post("/register", async (req, res) => {
     const existingCandidate = await Candidate.findOne({
       $or: [{ email }, { phone }],
     });
-    console.log("Incoming Data:", req.body);
-console.log("Existing Candidate:", existingCandidate);
 
     if (existingCandidate) {
       return res.status(400).json({
@@ -144,29 +148,11 @@ router.post("/login", async (req, res) => {
 });
 
 // PERSONAL DETAILS
-router.post("/personal-details", async (req, res) => {
+router.post("/personal-details", protectCandidate, async (req, res) => {
   try {
-    const {
-      email,
-      name,
-      gender,
-      dob,
-      city,
-      state,
-      linkedin,
-      github,
-    } = req.body;
+    const { name, gender, dob, city, state, linkedin, github } = req.body;
 
-    const candidate = await Candidate.findOne({
-      email,
-    });
-
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
-    }
+    const candidate = req.candidate;
 
     candidate.name = name;
     candidate.gender = gender;
@@ -192,26 +178,11 @@ router.post("/personal-details", async (req, res) => {
 });
 
 // ACADEMIC DETAILS
-router.post("/academic-details", async (req, res) => {
+router.post("/academic-details", protectCandidate, async (req, res) => {
   try {
-    const {
-      email,
-      college,
-      branch,
-      cgpa,
-      passoutYear,
-    } = req.body;
+    const { college, branch, cgpa, passoutYear } = req.body;
 
-    const candidate = await Candidate.findOne({
-      email,
-    });
-
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
-    }
+    const candidate = req.candidate;
 
     candidate.college = college;
     candidate.branch = branch;
@@ -234,24 +205,13 @@ router.post("/academic-details", async (req, res) => {
 });
 
 // PROJECTS
-router.post("/projects", async (req, res) => {
+router.post("/projects", protectCandidate, async (req, res) => {
   try {
-    const { email, project } = req.body;
+    const { project } = req.body;
 
-    const candidate = await Candidate.findOne({
-      email,
-    });
+    const candidate = req.candidate;
 
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
-    }
-
-    candidate.projects.push(
-  project.trim()
-);
+    candidate.projects.push(project.trim());
 
     await candidate.save();
 
@@ -269,24 +229,13 @@ router.post("/projects", async (req, res) => {
 });
 
 // CERTIFICATIONS
-router.post("/certifications", async (req, res) => {
+router.post("/certifications", protectCandidate, async (req, res) => {
   try {
-    const { email, certification } = req.body;
+    const { certification } = req.body;
 
-    const candidate = await Candidate.findOne({
-      email,
-    });
+    const candidate = req.candidate;
 
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
-    }
-
-    candidate.certifications.push(
-      certification
-    );
+    candidate.certifications.push(certification);
 
     await candidate.save();
 
@@ -303,14 +252,12 @@ router.post("/certifications", async (req, res) => {
   }
 });
 
-// VIEW ALL CANDIDATES
-router.get("/all", async (req, res) => {
+// GET AUTHENTICATED CANDIDATE PROFILE
+router.get("/profile", protectCandidate, async (req, res) => {
   try {
-    const candidates = await Candidate.find();
-
     res.json({
       success: true,
-      candidates,
+      candidate: req.candidate,
     });
   } catch (error) {
     res.status(500).json({
@@ -319,6 +266,7 @@ router.get("/all", async (req, res) => {
     });
   }
 });
+
 // Deprecated: prefer POST/PATCH /candidate/resume.
 // Kept for compatibility; requires authenticated candidate (ignores body email).
 router.post(
@@ -356,31 +304,4 @@ router.post(
     }
   }
 );
-// GET SINGLE CANDIDATE
-router.get("/profile/:email", async (req, res) => {
-  try {
-    const candidate =
-      await Candidate.findOne({
-        email: req.params.email,
-      });
-
-    if (!candidate) {
-      return res.status(404).json({
-        success: false,
-        message: "Candidate not found",
-      });
-    }
-
-    res.json({
-      success: true,
-      candidate,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
 module.exports = router;

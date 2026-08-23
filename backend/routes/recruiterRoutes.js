@@ -96,25 +96,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/all", async (req, res) => {
-  try {
-    const recruiters = await Recruiter.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: recruiters.length,
-      recruiters,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
 router.post("/jobs", async (req, res) => {
   try {
     const {

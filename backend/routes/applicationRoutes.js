@@ -7,6 +7,7 @@ const router = express.Router();
 // Recruiter / company admin (static paths first)
 router.get("/company/list", applicationController.listForRecruiter);
 router.get("/company/job/:jobId", applicationController.listForJob);
+router.patch("/company/:id/status", applicationController.updateStatus);
 router.get("/company/:id", applicationController.getForRecruiter);
 
 // Candidate

@@ -26,12 +26,19 @@ const companyRoutes = require(
 const teamRoutes = require(
   "./routes/teamRoutes"
 );
+const {
+  recoverPendingJobs,
+} = require("./services/resumeAnalysisQueue");
+
 const app = express();
 
 const PORT = Number(process.env.PORT) || 5000;
 
-// Connect MongoDB
-connectDB();
+// Connect MongoDB, then pick up any background analysis jobs that were
+// interrupted by a restart or crash.
+connectDB().then(() => {
+  recoverPendingJobs();
+});
 
 // CORS: restrict to FRONTEND_URL when set; otherwise allow all (previous default)
 const corsOptions = process.env.FRONTEND_URL
@@ -70,11 +77,27 @@ app.get("/", (req, res) => {
   });
 });
 
+const ALLOWED_DIFFICULTIES = new Set(["Easy", "Medium", "Hard"]);
+
 // Generate Interview Question
+// NOTE: this endpoint is unauthenticated and calls a paid AI provider.
+// See FINAL REPORT — recommended to put behind `protectCandidate`.
 app.post("/ask", async (req, res) => {
   try {
     const { category, difficulty } =
       req.body;
+
+    if (!category || typeof category !== "string" || category.length > 100) {
+      return res.status(400).json({
+        error: "A valid category is required",
+      });
+    }
+
+    if (!ALLOWED_DIFFICULTIES.has(difficulty)) {
+      return res.status(400).json({
+        error: "difficulty must be Easy, Medium or Hard",
+      });
+    }
 
     const prompt = `
 You are a senior technical interviewer.
@@ -94,11 +117,12 @@ Requirements:
       answer: response,
     });
   } catch (error) {
-    console.error(error);
+    console.error("[/ask]", error.code || "ERROR", error.message);
+    if (error.help) console.error(`[/ask] ${error.help}`);
 
-    res.status(500).json({
-      error:
-        "Failed to generate question",
+    res.status(error.statusCode || 500).json({
+      error: "Couldn't generate a question right now. Please try again.",
+      code: error.code || "AI_FAILURE",
     });
   }
 });
@@ -108,6 +132,14 @@ app.post("/evaluate", async (req, res) => {
   try {
     const { question, answer } =
       req.body;
+
+    if (!question || typeof question !== "string" || !question.trim()) {
+      return res.status(400).json({ error: "question is required" });
+    }
+
+    if (!answer || typeof answer !== "string" || !answer.trim()) {
+      return res.status(400).json({ error: "answer is required" });
+    }
 
     const prompt = `
 You are a Senior Software Engineer conducting a technical interview.
@@ -140,10 +172,12 @@ Follow-up Question
       evaluation: response,
     });
   } catch (error) {
-    console.error(error);
+    console.error("[/evaluate]", error.code || "ERROR", error.message);
+    if (error.help) console.error(`[/evaluate] ${error.help}`);
 
-    res.status(500).json({
-      error: "Evaluation failed",
+    res.status(error.statusCode || 500).json({
+      error: "Couldn't evaluate the answer right now. Please try again.",
+      code: error.code || "AI_FAILURE",
     });
   }
 });

@@ -1,102 +1,87 @@
-import { motion } from "framer-motion";
 import {
-  FileText,
-  BrainCircuit,
-  Code2,
-  BarChart3,
+  Braces,
+  ClipboardList,
+  FileSearch,
+  MessagesSquare,
+  ShieldCheck,
+  Workflow,
 } from "lucide-react";
 
+/**
+ * Platform capabilities.
+ *
+ * Every entry maps to something the codebase actually does — resume parsing,
+ * matching, Judge0-backed coding rounds, AI interviews, workflow builder,
+ * malpractice detection. No invented capabilities, no invented numbers.
+ */
+
+const CAPABILITIES = [
+  {
+    icon: FileSearch,
+    title: "Resume screening",
+    description:
+      "Uploaded resumes are parsed into structured skills, education, projects and experience — no manual data entry, and candidates aren't kept waiting while it runs.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Candidate matching",
+    description:
+      "Extracted skills are compared against each role's requirements so recruiters open a ranked list instead of a folder of PDFs.",
+  },
+  {
+    icon: Braces,
+    title: "Coding assessments",
+    description:
+      "Timed problems in a real editor, executed against hidden test cases with automatic scoring on correctness and runtime.",
+  },
+  {
+    icon: MessagesSquare,
+    title: "AI technical interviews",
+    description:
+      "Questions generated from the candidate's own resume and the job description, then scored per answer on technical depth and communication.",
+  },
+  {
+    icon: Workflow,
+    title: "Configurable hiring workflows",
+    description:
+      "Build the round sequence per role — screening, coding, technical, HR — and set question counts, difficulty and duration for each.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Assessment integrity",
+    description:
+      "Tab switches and focus loss during assessments are recorded and surfaced in the recruiter's report alongside the candidate's answers.",
+  },
+];
+
 function FeaturesSection() {
-  const features = [
-    {
-      icon: FileText,
-      color: "text-blue-600",
-      title: "AI Resume Parsing",
-      description:
-        "Automatically extract skills, education, projects and experience from resumes using AI.",
-    },
-    {
-      icon: BrainCircuit,
-      color: "text-purple-600",
-      title: "AI Interview Engine",
-      description:
-        "Conduct intelligent interviews with adaptive questions and real-time evaluation.",
-    },
-    {
-      icon: Code2,
-      color: "text-green-600",
-      title: "Coding Assessments",
-      description:
-        "Evaluate coding skills using an integrated online compiler with automatic scoring.",
-    },
-    {
-      icon: BarChart3,
-      color: "text-orange-500",
-      title: "Hiring Analytics",
-      description:
-        "Get detailed insights into candidate performance and recruitment efficiency.",
-    },
-  ];
-
   return (
-    <section className="py-24 bg-white">
-
-      <div className="max-w-7xl mx-auto px-6">
-
-        <motion.h2
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center text-5xl font-extrabold text-slate-900"
-        >
-          Everything You Need
-        </motion.h2>
-
-        <p className="text-center text-lg text-slate-600 mt-5 max-w-3xl mx-auto">
-          A complete AI-powered recruitment ecosystem for
-          candidates and recruiters.
-        </p>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
-
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.5,
-                  delay: index * 0.15,
-                }}
-                viewport={{ once: true }}
-                className="bg-slate-50 rounded-3xl border border-slate-200 p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300"
-              >
-                <div
-                  className={`w-16 h-16 rounded-2xl bg-white shadow flex items-center justify-center ${feature.color}`}
-                >
-                  <Icon size={34} />
-                </div>
-
-                <h3 className="text-2xl font-bold mt-8">
-                  {feature.title}
-                </h3>
-
-                <p className="mt-5 text-slate-600 leading-7">
-                  {feature.description}
-                </p>
-
-              </motion.div>
-            );
-          })}
-
+    <section id="platform" className="border-b border-border bg-muted/20">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="max-w-2xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            What the platform does
+          </h2>
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+            Each stage of hiring, handled end to end — with the evidence behind
+            every decision kept alongside it.
+          </p>
         </div>
 
+        <div className="mt-10 grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          {CAPABILITIES.map(({ icon: Icon, title, description }) => (
+            <article key={title} className="bg-background p-6">
+              <Icon className="h-5 w-5 text-muted-foreground" aria-hidden />
+              <h3 className="mt-4 text-sm font-semibold text-foreground">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            </article>
+          ))}
+        </div>
       </div>
-
     </section>
   );
 }

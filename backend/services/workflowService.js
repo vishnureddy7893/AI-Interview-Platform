@@ -60,8 +60,53 @@ async function updateJobWorkflow(jobId, workflow, actor) {
   return job;
 }
 
+const EDITABLE_JOB_FIELDS = [
+  "title",
+  "department",
+  "location",
+  "workMode",
+  "employmentType",
+  "experience",
+  "openings",
+  "salaryMin",
+  "salaryMax",
+  "description",
+  "requirements",
+  "skills",
+];
+
+async function updateJobFields(jobId, fields, actor) {
+  const job = await assertJobAccess(jobId, actor);
+
+  EDITABLE_JOB_FIELDS.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(fields || {}, key)) {
+      job[key] = fields[key];
+    }
+  });
+
+  await job.save();
+
+  return job;
+}
+
 async function getJobForActor(jobId, actor) {
   return assertJobAccess(jobId, actor);
+}
+
+/**
+ * Soft-close a job. Never physically deletes the job or its applications —
+ * `isDeleted` just removes it from active listings (see Job.find filters in
+ * jobController). Applications already reference the job by id and are read
+ * independently of this flag, so existing applications stay fully accessible.
+ */
+async function archiveJob(jobId, actor) {
+  const job = await assertJobAccess(jobId, actor);
+
+  job.isDeleted = true;
+  job.status = "Closed";
+  await job.save();
+
+  return job;
 }
 
 async function resolveActorFromRequest(req) {
@@ -115,6 +160,8 @@ async function resolveActorFromRequest(req) {
 module.exports = {
   getTopicsLibrary,
   updateJobWorkflow,
+  updateJobFields,
   getJobForActor,
+  archiveJob,
   resolveActorFromRequest,
 };

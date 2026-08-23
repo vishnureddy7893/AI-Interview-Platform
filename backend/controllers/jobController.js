@@ -3,7 +3,9 @@ const Recruiter = require("../models/Recruiter");
 const {
   getTopicsLibrary,
   updateJobWorkflow,
+  updateJobFields,
   getJobForActor,
+  archiveJob,
   resolveActorFromRequest,
 } = require("../services/workflowService");
 const {
@@ -106,6 +108,40 @@ exports.getTopics = async (_req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+exports.updateJob = async (req, res) => {
+  try {
+    const actor = await resolveActorFromRequest(req);
+    const job = await updateJobFields(req.params.id, req.body, actor);
+
+    return res.json({
+      success: true,
+      message: "Job updated successfully",
+      job,
+    });
+  } catch (error) {
+    console.error(error);
+    const mapped = mapError(error);
+    return res.status(mapped.statusCode).json(mapped.body);
+  }
+};
+
+exports.archiveJob = async (req, res) => {
+  try {
+    const actor = await resolveActorFromRequest(req);
+    const job = await archiveJob(req.params.id, actor);
+
+    return res.json({
+      success: true,
+      message: "Job closed successfully",
+      job,
+    });
+  } catch (error) {
+    console.error(error);
+    const mapped = mapError(error);
+    return res.status(mapped.statusCode).json(mapped.body);
   }
 };
 

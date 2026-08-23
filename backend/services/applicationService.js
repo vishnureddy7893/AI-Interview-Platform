@@ -632,18 +632,54 @@ async function listJobApplications(jobId, companyId) {
   const stats = {
     total: applications.length,
     inProgress: applications.filter(
-      (a) => !["Completed", "Rejected", "Selected", "Hired"].includes(a.status)
+      (a) => !["Hired", "Rejected"].includes(a.recruiterStatus)
     ).length,
     completed: applications.filter((a) =>
-      ["Completed", "Selected", "Hired"].includes(a.status)
+      ["Selected", "Hired"].includes(a.recruiterStatus)
     ).length,
-    rejected: applications.filter((a) => a.status === "Rejected").length,
+    rejected: applications.filter((a) => a.recruiterStatus === "Rejected")
+      .length,
     selected: applications.filter((a) =>
-      ["Selected", "Hired", "Offer"].includes(a.status)
+      ["Selected", "Hired"].includes(a.recruiterStatus)
     ).length,
   };
 
   return { job, applications, stats };
+}
+
+/**
+ * Recruiter hiring-decision state machine — deliberately separate from the
+ * AI/round-progress `status` field above. Only this function may change
+ * `recruiterStatus`; round completion (recomputeProgress/unlockNextRound)
+ * never touches it.
+ */
+const RECRUITER_STATUS_TRANSITIONS = {
+  Applied: ["Under Review"],
+  "Under Review": ["Shortlisted", "Rejected"],
+  Shortlisted: ["Interview"],
+  Interview: ["Selected", "Rejected"],
+  Selected: ["Hired"],
+  Hired: [],
+  Rejected: [],
+};
+
+async function updateRecruiterStatus(applicationId, companyId, nextStatus) {
+  const application = await getApplicationForCompany(applicationId, companyId);
+
+  const allowed = RECRUITER_STATUS_TRANSITIONS[application.recruiterStatus] || [];
+  if (!allowed.includes(nextStatus)) {
+    const error = new Error(
+      `Cannot move application from "${application.recruiterStatus}" to "${nextStatus}"`
+    );
+    error.code = "INVALID_STATUS_TRANSITION";
+    error.statusCode = 409;
+    throw error;
+  }
+
+  application.recruiterStatus = nextStatus;
+  await application.save();
+
+  return application;
 }
 
 async function listCompanyApplications(companyId) {
@@ -693,6 +729,8 @@ module.exports = {
   listJobApplications,
   listCompanyApplications,
   getApplicationForCompany,
+  updateRecruiterStatus,
+  RECRUITER_STATUS_TRANSITIONS,
   moduleForRoundType,
   buildWorkflowSnapshot,
 };

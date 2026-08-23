@@ -170,7 +170,7 @@ async function parseCandidateResume(candidate) {
 }
 
 function sanitizeParsedResumeForClient(parsedResume) {
-  if (!parsedResume) return null;
+  if (!parsedResume || !parsedResume.parsedAt) return null;
 
   const doc =
     typeof parsedResume.toObject === "function"

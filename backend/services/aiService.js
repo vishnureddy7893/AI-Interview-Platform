@@ -1,8 +1,9 @@
 const askGroq = require("../groq");
+const { classifyGroqError } = require("../groq");
 const { parseLlmJson } = require("../utils/parseLlmJson");
 
 const AI_VERSION =
-  process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 const RESUME_PARSE_SYSTEM = `You are a strict resume data extractor.
 
@@ -208,35 +209,29 @@ IMPORTANT: Your previous reply was not valid JSON. Reply with ONLY the JSON obje
   };
 }
 
+const AI_ERROR_CODES = new Set([
+  "AI_NOT_CONFIGURED",
+  "AI_TLS_UNTRUSTED",
+  "AI_AUTH_FAILED",
+  "AI_MODEL_UNAVAILABLE",
+  "AI_RATE_LIMIT",
+  "AI_TIMEOUT",
+  "AI_NETWORK_ERROR",
+  "AI_UPSTREAM_ERROR",
+  "AI_FAILURE",
+]);
+
+/**
+ * askGroq already classifies transport/API failures into stable codes.
+ * Re-throw those untouched so the real cause survives all the way to the logs
+ * and the HTTP response — do not collapse everything into one opaque message.
+ */
 function mapGroqError(error) {
-  const message = error?.message || String(error);
-  const status = error?.status || error?.statusCode;
-
-  if (
-    status === 429 ||
-    /rate limit/i.test(message)
-  ) {
-    const err = new Error("AI service unavailable");
-    err.code = "AI_RATE_LIMIT";
-    err.statusCode = 429;
-    throw err;
+  if (error && AI_ERROR_CODES.has(error.code)) {
+    throw error;
   }
 
-  if (
-    status === 408 ||
-    /timeout|timed out|ETIMEDOUT|ESOCKETTIMEDOUT/i.test(message)
-  ) {
-    const err = new Error("AI service unavailable");
-    err.code = "AI_TIMEOUT";
-    err.statusCode = 504;
-    throw err;
-  }
-
-  const err = new Error("AI service unavailable");
-  err.code = "AI_FAILURE";
-  err.statusCode = 502;
-  err.cause = error;
-  throw err;
+  throw classifyGroqError(error);
 }
 
 /**
